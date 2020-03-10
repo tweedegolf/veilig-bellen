@@ -17,6 +17,7 @@ func main() {
 		},
 	}
 
+	http.HandleFunc("/call", cfg.handleCall)
 	http.HandleFunc("/session", cfg.handleNewSession)
 	http.ListenAndServe(cfg.ListenAddress, nil)
 }

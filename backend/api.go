@@ -10,14 +10,25 @@ import "github.com/privacybydesign/irmago"
 import "github.com/privacybydesign/irmago/server"
 
 type Configuration struct {
+	PostgresAddress     string
 	ListenAddress       string
 	IrmaServerURL       string
 	ServicePhoneNumber  string
 	PurposeToAttributes map[string]irma.AttributeConDisCon
 }
 
+// TODO: These fields should be in a database, not in memory.
+type Session struct {
+	// The DTMF code that relates the incoming call to the Irma session.
+	DTMF string
+	// The secret that allows retrieving this session's disclosed Irma
+	// attributes from the backend.
+	DisclosureSecret    string
+	DisclosedAttributes []irma.DisclosedAttribute
+}
+
 func (cfg Configuration) generateDTMF() string {
-	return "00000000" // TODO
+	return "0000000000" // TODO
 }
 
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
@@ -73,5 +84,19 @@ func (cfg Configuration) handleNewSession(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// TODO: Spawn goroutine to poll irma server.
+	// TODO: Persist session in cluster.
+
 	w.Write(qrJSON)
+}
+
+// A citizen has called the service number. Amazon connect picked up and
+// triggered a lambda. The lambda made a POST request to the backend, handled
+// here. This POST request should contain only the DTMF code the caller sent.
+// We respond with a fresh secret that will be placed as metadata in the call by
+// the lambda. The secret can later be used by the agent frontend to receive the
+// revealed Irma attributes.
+// TODO: This needs authentication.
+func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
+
 }
