@@ -1,5 +1,6 @@
-package backend
+package main
 
+import "encoding/json"
 import "fmt"
 import "log"
 import "net/http"
@@ -9,6 +10,7 @@ import "github.com/privacybydesign/irmago"
 import "github.com/privacybydesign/irmago/server"
 
 type Configuration struct {
+	ListenAddress       string
 	IrmaServerURL       string
 	ServicePhoneNumber  string
 	PurposeToAttributes map[string]irma.AttributeConDisCon
@@ -55,5 +57,21 @@ func (cfg Configuration) handleNewSession(w http.ResponseWriter, r *http.Request
 
 	transport := irma.NewHTTPTransport(cfg.IrmaServerURL)
 	var pkg server.SessionPackage
-	err = transport.Post("session", pkg, request)
+	err = transport.Post("session", &pkg, request)
+	if err != nil {
+		log.Printf("failed to request irma session: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	qr := pkg.SessionPtr
+	// Update the request server URL to include the session token.
+	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
+	qrJSON, err := json.Marshal(qr)
+	if err != nil {
+		log.Printf("failed to marshal QR code to JSON: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(qrJSON)
 }
