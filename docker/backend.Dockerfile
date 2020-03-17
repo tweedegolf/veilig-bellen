@@ -16,6 +16,8 @@ RUN set -eux; \
 # install go
 RUN wget "https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz"
 RUN tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
+RUN rm go$GO_VERSION.linux-amd64.tar.gz
+
 ENV PATH=${PATH}:/usr/local/go/bin
 ENV GOPATH=/go
 

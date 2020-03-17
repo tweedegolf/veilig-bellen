@@ -34,6 +34,7 @@ services:
       context: .
       args:
         GO_VERSION: "1.14"
+    user: "$USER_ID:$GROUP_ID"
     depends_on: [psql]
     volumes:
     - "./backend:/go/src/app:cached"
