@@ -9,6 +9,7 @@ RUN set -eux; \
         libssl-dev \
         inotify-tools \ 
         go-dep \
+        procps \
     ; \
     rm -rf /var/lib/apt/lists/*;
 
@@ -18,4 +19,4 @@ RUN tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
 ENV PATH=${PATH}:/usr/local/go/bin
 ENV GOPATH=/go
 
-WORKDIR $GOPATH/src/app
+WORKDIR $GOPATH/src
