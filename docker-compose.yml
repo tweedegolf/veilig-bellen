@@ -7,8 +7,8 @@ services:
     expose: [8088]
     networks:
       - default
-    ports: ["127.0.0.1:8088:8088"]
-    command: ["irma", "server", "-v", "--url", "https://irma.veiligbellen.test.tweede.golf"]
+    ports: ["0.0.0.0:8088:8088"]
+    command: ["irma", "server", "-v", "--url", "http://${HOST_LAN_IP}:8088"]
 
   nginx:
     image: nginx:1.17
@@ -57,3 +57,4 @@ services:
     networks: [default]
 networks:
   default: ~
+  

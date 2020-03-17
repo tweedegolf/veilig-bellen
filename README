@@ -11,5 +11,5 @@ bin/setup.sh
 ### To run:
 
 ```bash
-docker-compose up
+bin/up.sh
 ```
