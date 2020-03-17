@@ -1,6 +1,10 @@
 FROM docker.tgrep.nl/docker/debian-dev:buster
 
 ARG GO_VERSION
+ARG USER_ID
+ARG GROUP_ID
+ENV USER_ID ${USER_ID}
+ENV GROUP_ID ${GROUP_ID}
 ENV GO_VERSION ${GO_VERSION}
 
 RUN set -eux; \
@@ -8,7 +12,6 @@ RUN set -eux; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libssl-dev \
         inotify-tools \ 
-        go-dep \
         procps \
     ; \
     rm -rf /var/lib/apt/lists/*;
@@ -20,5 +23,8 @@ RUN rm go$GO_VERSION.linux-amd64.tar.gz
 
 ENV PATH=${PATH}:/usr/local/go/bin
 ENV GOPATH=/go
+
+RUN mkdir -p $GOPATH
+RUN chown $USER_ID:$GROUP_ID $GOPATH
 
 WORKDIR $GOPATH/src

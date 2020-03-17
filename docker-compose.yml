@@ -34,6 +34,8 @@ services:
       context: .
       args:
         GO_VERSION: "1.14"
+        USER_ID: "$USER_ID"
+        GROUP_ID: "$GROUP_ID"
     user: "$USER_ID:$GROUP_ID"
     depends_on: [psql]
     volumes:
