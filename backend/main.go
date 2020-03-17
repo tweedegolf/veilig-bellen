@@ -92,7 +92,7 @@ func main() {
 
 	// TODO: Fail immediately if configured Irma server or configured database
 	// can't be reached before entering ListenAndServe.
-	// go expireDaemon(cfg)
+	go expireDaemon(cfg)
 
 	http.HandleFunc("/call", cfg.handleCall)
 	http.HandleFunc("/session", cfg.handleSession)
