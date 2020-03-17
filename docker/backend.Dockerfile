@@ -1,9 +1,21 @@
-FROM golang:1.14-buster
+FROM docker.tgrep.nl/docker/debian-dev:buster
 
-RUN apt-get update -y
-RUN apt-get upgrade -y
-RUN apt-get install inotify-tools -y
+ARG GO_VERSION
+ENV GO_VERSION ${GO_VERSION}
 
-WORKDIR /app
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libssl-dev \
+        inotify-tools \ 
+        go-dep \
+    ; \
+    rm -rf /var/lib/apt/lists/*;
 
-CMD bin/watch.sh main.go
+# install go
+RUN wget "https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz"
+RUN tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
+ENV PATH=${PATH}:/usr/local/go/bin
+ENV GOPATH=/go
+
+WORKDIR $GOPATH/src/app

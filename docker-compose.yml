@@ -5,7 +5,6 @@ services:
     build:
       dockerfile: './docker/irmago.Dockerfile'
       context: .
-    user: '$USER_ID:$GROUP_ID'
     expose: [8088]
     networks:
       - default
@@ -14,6 +13,7 @@ services:
     image: nginx:1.17
     depends_on:
       - irma
+      - backend
     volumes:
       - ".:/app:cached"
       - "./docker/nginx.conf:/etc/nginx/nginx.conf:ro"
@@ -30,10 +30,13 @@ services:
     build:
       dockerfile: './docker/backend.Dockerfile'
       context: .
+      args:
+        GO_VERSION: "1.14"
     volumes:
-    - "./backend:/app:cached"
-    - "./bin/:/app/bin:cached"
+    - "./backend:/go/src/app:cached"
+    - "./bin/:/bin/app/:cached"
     # user: '$USER_ID:$GROUP_ID'
+    command: ["/bin/app/watch.sh", "main.go"]
     networks:
       - default
 networks:

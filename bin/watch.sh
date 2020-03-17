@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Watch for file changes an re-run the Go application
+
 go run $1 &
 while inotifywait --exclude .swp -e modify -r . ;
 do
