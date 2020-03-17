@@ -116,6 +116,7 @@ github.com/privacybydesign/irmago v0.0.0-20200306135745-b0ce9a706e71 h1:/i7DlA/P
 github.com/privacybydesign/irmago v0.0.0-20200306135745-b0ce9a706e71/go.mod h1:xsJZPAp4mtGSUQLFdfhTgcxU0PfRrI4ZVC3APDF49G0=
 github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d h1:XwKXy5OPmsOiNCJ1/ENs1+2J/6weBmYaxTGOtecKchk=
 github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d/go.mod h1:W/QHK9G0i5yrmHvej5+hhoFMXTSZIWHGQRcpbGgqV9s=
+github.com/sietseringers/pflag v1.0.4-0.20190111213756-a45bfec10d59 h1:8T2zVJpVz08QuVeA48vjOn6t58jvDAQVHXuxTSR2154=
 github.com/sietseringers/pflag v1.0.4-0.20190111213756-a45bfec10d59/go.mod h1:cyasUcLdC8LpK3Ko/gUSv2OdKkKjavd48ZfXR2zATWw=
 github.com/sietseringers/viper v1.0.1-0.20200205174444-d996804203c7/go.mod h1:ODf1H5bSB/Vm1et4JKRx1fy/2Fb3EijyHcLHShwUHMs=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=

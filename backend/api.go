@@ -18,15 +18,6 @@ import "github.com/privacybydesign/irmago/server"
 type DTMF = string
 type Secret = string
 
-type Configuration struct {
-	PostgresAddress     string
-	ListenAddress       string
-	IrmaServerURL       string
-	ServicePhoneNumber  string
-	PurposeToAttributes map[string]irma.AttributeConDisCon
-	db                  Database
-}
-
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
 	condiscon, ok := cfg.PurposeToAttributes[purpose]
 	if !ok {
