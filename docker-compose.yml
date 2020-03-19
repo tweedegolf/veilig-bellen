@@ -9,6 +9,8 @@ services:
       - default
     ports: ["0.0.0.0:8088:8088"]
     command: ["irma", "server", "-v", "--url", "http://${HOST_LAN_IP}:8088"]
+    volumes:
+      - "/tmp/bellen-cache/irma:/root/.local/share/irma"
 
   nginx:
     image: nginx:1.17
@@ -28,6 +30,7 @@ services:
             aliases:
               - backend.veiligbellen.test.tweede.golf
               - irma.veiligbellen.test.tweede.golf
+
   backend:
     build:
       dockerfile: './docker/backend.Dockerfile'
@@ -41,9 +44,14 @@ services:
     volumes:
     - "./backend:/go/src/app:cached"
     - "./bin/:/bin/app/:cached"
-    command: ["/bin/app/watch.sh", "app"]
-    environment:
-      POSTGRES_URL: "psql://tg@psql:5432/tg"
+    command:
+    - "/bin/app/watch.sh"
+    - "app"
+    - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
+    - "--listen-address=:8080"
+    - "--irma-server=http://irma:8088"
+    - "--phone-number=+31123456789"
+    - '--purpose-map={"foo":[[["irma-demo.MijnOverheid.root.BSN"]]]}'
     networks:
       - default
     ports: ["127.0.0.1:8080:8080"]
@@ -56,8 +64,7 @@ services:
         POSTGRES_DB: tg
         TZ: Europe/Amsterdam
         POSTGRES_HOST_AUTH_METHOD: trust
-    ports: ["127.0.0.1:5432:5432"]
     networks: [default]
+
 networks:
   default: ~
-  
