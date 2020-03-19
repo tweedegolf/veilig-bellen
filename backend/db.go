@@ -24,6 +24,7 @@ func generateSecrets() (DTMF, Secret, error) {
 	if err != nil {
 		return "", "", err
 	}
+	// TODO: Left-pad dtmf with zeroes in case random number was small.
 	return dtmf.String(), base64.URLEncoding.EncodeToString(secret), nil
 }
 
@@ -36,7 +37,7 @@ func (db Database) NewSession() (DTMF, Secret, error) {
 			return "", "", err
 		}
 
-		_, err = db.db.Exec("INSERT INTO sessions VALUES (?, ?, DEFAULT, DEFAULT)", dtmf, secret)
+		_, err = db.db.Exec("INSERT INTO sessions VALUES ($1, $2, DEFAULT, DEFAULT)", secret, dtmf)
 		// TODO: Continue retrying if error is unique violation.
 		if err != nil {
 			err = fmt.Errorf("failed to insert session in database: %w", err)
@@ -50,24 +51,24 @@ func (db Database) NewSession() (DTMF, Secret, error) {
 
 func (db Database) secretFromDTMF(dtmf string) (string, error) {
 	var secret string
-	row := db.db.QueryRow("SELECT secret FROM sessions WHERE dtmf = ?", dtmf)
+	row := db.db.QueryRow("SELECT secret FROM sessions WHERE dtmf = $1", dtmf)
 	err := row.Scan(&secret)
 	return secret, err
 }
 
 func (db Database) storeDisclosed(secret string, disclosed string) error {
-	_, err := db.db.Exec("UPATE sessions SET disclosed = ? WHERE secret = ?", disclosed, secret)
+	_, err := db.db.Exec("UPDATE sessions SET disclosed = $1 WHERE secret = $2", disclosed, secret)
 	return err
 }
 
 func (db Database) getDisclosed(secret string) (string, error) {
 	var disclosed string
-	row := db.db.QueryRow("SELECT disclosed FROM sessions WHERE secret = ?", secret)
+	row := db.db.QueryRow("SELECT disclosed FROM sessions WHERE secret = $1", secret)
 	err := row.Scan(&disclosed)
 	return disclosed, err
 }
 
 func (db Database) expire() error {
-	_, err := db.db.Exec("DELETE FROM sessions WHERE created < now() - '1 hour'::inerval")
+	_, err := db.db.Exec("DELETE FROM sessions WHERE created < now() - '1 hour'::interval")
 	return err
 }
