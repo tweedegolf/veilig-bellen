@@ -1,4 +1,7 @@
 import 'amazon-connect-streams';
+import axios from 'axios';
+
+const vbServerDisclose = 'https://backend.veiligbellen.test.tweede.golf/disclose';
 
 window.addEventListener('load', () => {
     const containerDiv = window.document.getElementById('ccp');
@@ -32,8 +35,20 @@ window.addEventListener('load', () => {
         console.log("agent-conf", agent.getConfiguration());
     });
 
-    connect.contact((contact) => {
+    connect.contact(async (contact) => {
         console.log('contact', contact);
-        console.log('attributes', contact.getAttributes());
+
+        const attributes = contact.getAttributes();
+
+        console.log('attributes', attributes);
+        const response = await axios.get(vbServerDisclose, {
+            params: {
+                secret: attributes.session_secret.value,
+            },
+        });
+
+        if (response.status === 200) {
+            console.log(response.data);
+        }
     });
 });
