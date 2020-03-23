@@ -1,0 +1,20 @@
+POST /session
+	Called by the citizen frontend to request a new session. The post body
+	must contain a `purpose` parameter with one of the purposes from the
+	backend configuration. Starts a new Irma session and returns the Irma QR
+	code JSON as the response body.
+
+POST /call
+	Called by an Amazon Connect Lambda to inform a call was initiated. The
+	post body must contain a `dtmf` parameter with the associated DTMF code.
+	Looks up the secret corresponding to the DTMF code in the database and
+	returns it as the response body. The Amazon Connect Lambda will store
+	this secret as an attribute of the call.
+
+GET /disclose
+	Called by the agent frontend to request the disclosed attributes. The
+	request URL must contain a `secret` parameter with the session secret
+	corresponding to the session with the desired attributes. The agent
+	frontend will receive this secret as part of the call they accept. Looks
+	up the Irma JSON object with the disclosed attributes in the database
+	and returns it as the response body.
