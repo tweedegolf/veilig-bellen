@@ -26,7 +26,7 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 
 	disclosure := irma.NewDisclosureRequest()
 	disclosure.Disclose = condiscon
-	disclosure.ClientReturnURL = "tel:" + cfg.ServicePhoneNumber + dtmf
+	disclosure.ClientReturnURL = "tel:" + cfg.ServicePhoneNumber + "," + dtmf
 
 	request := &irma.ServiceProviderRequest{
 		Request: disclosure,

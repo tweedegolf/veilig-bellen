@@ -1,0 +1,91 @@
+swagger: "2.0"
+info:
+  description: "Go server"
+  version: "1.0.0"
+  title: "IRMA veilig bellen backend"
+host: "proxy.irma.bellen.tweede.golf"
+tags:
+- name: "unprivileged"
+  description: "Accessed by anyone on the internet"
+- name: "privileged"
+  description: "Accessed by KCC employees (over the internet)"
+- name: "backend"
+  description: "Accessed by Amazon Connect / Lambda"
+schemes:
+- "https"
+- "http"
+paths:
+  /session:
+    post:
+      tags:
+      - "unprivileged"
+      summary: "Create a new session"
+      consumes: ["application/x-www-form-urlencoded"]
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/IrmaQr"
+        404:
+          description: "Purpose not defined"
+      parameters:
+      - name: "purpose"
+        in: "formData"
+        type: "string"
+        description: >
+          A predefined purpose for this session
+          determines condiscon
+        required: true
+  /call:
+    post:
+      tags:
+      - "backend"
+      summary: "Inform the backend a call has updated"
+      consumes: ["application/x-www-form-urlencoded"]
+      produces:
+      - "text"
+      parameters:
+      - name: "dtmf"
+        type: "integer"
+        in: "formData"
+        required: true
+        description: "Numerical code that is sent via the phone"
+      - name: "call_state"
+        type: "string"
+        in: "formData"
+        required: true
+        enum: [queued, active, left]
+        description: "State of the current call"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "string"
+            description: "Call secret"
+  /disclose:
+    get:
+      tags:
+      - "privileged"
+      summary: "Get IRMA attributes that were disclosed"
+      parameters:
+      - name: "secret"
+        type: "string"
+        in: "query"
+        required: true
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "object"
+            description: "List of disclosed IRMA attributes"
+definitions:
+  IrmaQr:
+    type: "object"
+    properties:
+      u:
+        type: "string"
+        format: "url"
+        description: "Link to show a QR code for"
+      irmaqr:
+        description: "State of the IRMA session"
+        type: "string"
