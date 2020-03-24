@@ -18,6 +18,7 @@ services:
       - irma
       - backend
       - frontend_agents
+      - frontend_public
     volumes:
       - ".:/app:cached"
       - "./docker/nginx.conf:/etc/nginx/nginx.conf:ro"
@@ -31,6 +32,8 @@ services:
             aliases:
               - backend.veiligbellen.test.tweede.golf
               - irma.veiligbellen.test.tweede.golf
+              - agents.veiligbellen.test.tweede.golf
+              - public.veiligbellen.test.tweede.golf
 
   backend:
     build:
@@ -50,7 +53,7 @@ services:
     - "app"
     - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
     - "--listen-address=:8080"
-    - "--irma-server=http://irma:8088"
+    - "--irma-server=https://irma-noauth.demo.sarif.nl"
     - "--phone-number=+318000900084"
     - '--purpose-map={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}'
     networks:
@@ -70,6 +73,22 @@ services:
     - "serve"
     - "--no-hmr"
     - "src/index.html"
+    networks:
+        - default
+    expose: [1234]
+
+  frontend_public:
+    image: "node:buster-slim"
+    user: "$USER_ID:$GROUP_ID"
+    volumes:
+    - "./frontend-public:/app:cached"
+    working_dir: "/app"
+    command:
+    - "/usr/local/bin/yarn"
+    - "parcel"
+    - "serve"
+    - "--no-hmr"
+    - "src/example.html"
     networks:
         - default
     expose: [1234]
