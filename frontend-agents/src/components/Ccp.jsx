@@ -6,7 +6,7 @@ import 'amazon-connect-streams';
 const vbServerDisclose = 'https://backend.veiligbellen.test.tweede.golf/disclose';
 const ccpUrl = 'https://sarif.awsapps.com/connect/ccp-v2';
 
-const Ccp = ({ onDisclosure }) => {
+const Ccp = ({ setError, onContact, onDisclosure, onConnect, onDisconnect }) => {
     const containerRef = useCallback(element => {
         if (element !== null) {
             connect.core.initCCP(element, {
@@ -39,7 +39,17 @@ const Ccp = ({ onDisclosure }) => {
             connect.contact(async (contact) => {
                 console.log('contact', contact);
 
+                contact.onConnected(() => {
+                    onConnect();
+                });
+
+                contact.onEnded(() => {
+                    onDisconnect();
+                });
+
                 const attributes = contact.getAttributes();
+
+                onContact(attributes.phonenumber.value);
 
                 console.log('attributes', attributes);
                 const response = await axios.get(vbServerDisclose, {
@@ -50,6 +60,8 @@ const Ccp = ({ onDisclosure }) => {
 
                 if (response.status === 200) {
                     onDisclosure(response.data);
+                } else {
+                    setError('Failed to retrieve disclosed data');
                 }
             });
         }

@@ -1,32 +1,40 @@
 import React, { useState } from 'react';
 
-import State from './State';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Alert from '@material-ui/lab/Alert';
+
+import ContactInfo from './ContactInfo';
 import Ccp from './Ccp';
 
 const App = () => {
-    const [state, setState] = useState('idle');
-    const [disclosure, setDisclosure] = useState(null);
+    const [state, setState] = useState({ mode: 'idle' });
+    const [error, setError] = useState(null);
 
-    const onContact = (/*number, purpose*/) => {
-        setState('connected');
+    const onContact = (phonenumber) => {
+        setState({ mode: 'connected', phonenumber });
     };
 
-    const onDisclosure = (d) => {
-        setState('disclosed');
-        setDisclosure(d);
+    const onDisclosure = (disclosure) => {
+        setState(state => ({ ...state, mode: 'disclosed', disclosure }));
+    };
+
+    const onConnect = () => {
+        // TODO send push message
+        setState(state => ({ ...state, mode: 'connected' }));
     };
 
     const onDisconnect = () => {
-        setState('idle');
-        setDisclosure(null);
+        // TODO send push message
+        setState({ mode: 'idle' });
     };
 
     return (
-        <>
-            <h1>IRMA veilig bellen</h1>
-            <State {...{ state, disclosure }} />
-            <Ccp {...{ onContact, onDisclosure, onDisconnect }} />
-        </>
+        <CssBaseline>
+            <h1>IRMA veilig bellen ({state.mode})</h1>
+            {error && <Alert severity="error">{error}</Alert>}
+            <ContactInfo {...state} />
+            <Ccp {...{ setError, onContact, onDisclosure, onConnect, onDisconnect }} />
+        </CssBaseline>
     );
 };
 
