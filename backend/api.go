@@ -18,6 +18,15 @@ import "github.com/privacybydesign/irmago/server"
 type DTMF = string
 type Secret = string
 
+type SessionResponse struct {
+	SessionPtr     *irma.Qr    `json:"sessionPtr,omitempty"`
+	Phonenumber    string      `json:"phonenumber,omitempty"`
+}
+
+func (cfg Configuration) phonenumber(dtmf string) string {
+	return cfg.ServicePhoneNumber + "," + dtmf
+}
+
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
 	condiscon, ok := cfg.PurposeToAttributes[purpose]
 	if !ok {
@@ -26,7 +35,7 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 
 	disclosure := irma.NewDisclosureRequest()
 	disclosure.Disclose = condiscon
-	disclosure.ClientReturnURL = "tel:" + cfg.ServicePhoneNumber + "," + dtmf
+	disclosure.ClientReturnURL = "tel:" + cfg.phonenumber(dtmf)
 
 	request := &irma.ServiceProviderRequest{
 		Request: disclosure,
@@ -68,10 +77,13 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	qr := pkg.SessionPtr
+	var session SessionResponse;
+	session.SessionPtr = pkg.SessionPtr
+	session.Phonenumber = cfg.phonenumber(dtmf)
+
 	// Update the request server URL to include the session token.
 	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
-	qrJSON, err := json.Marshal(qr)
+	sessionJSON, err := json.Marshal(session)
 	if err != nil {
 		log.Printf("failed to marshal QR code: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -79,7 +91,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go cfg.waitForIrmaSession(transport, secret)
-	w.Write(qrJSON)
+	w.Write(sessionJSON)
 }
 
 // A citizen has started an IRMA session and we're waiting for them to finish.
