@@ -5,7 +5,8 @@
   "license": "MIT",
   "dependencies": {
     "@privacybydesign/irmajs": "^0.1.9",
-    "axios": "^0.19.2"
+    "axios": "^0.19.2",
+    "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
     "parcel": "^2.0.0-alpha.3.2",

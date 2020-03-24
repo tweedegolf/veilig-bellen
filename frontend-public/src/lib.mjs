@@ -1,4 +1,5 @@
 import axios from 'axios';
+import qrcode from 'qrcode-terminal';
 import { handleSession } from '@privacybydesign/irmajs';
 
 const veiligBellen = {
@@ -11,7 +12,12 @@ const veiligBellen = {
             return;
         }
 
-        console.log(await handleSession(response.data));
+        const { sessionPtr, phonenumber } = response.data;
+
+        await handleSession(sessionPtr);
+
+        console.log(`Please place a call now to: ${phonenumber}`);
+        qrcode.generate(`tel:${phonenumber}`);
     },
 };
 
