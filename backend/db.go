@@ -4,8 +4,10 @@ import "crypto/rand"
 import "database/sql"
 import "encoding/base64"
 import "fmt"
-import "log"
 import "math/big"
+import "time"
+
+import "github.com/lib/pq"
 
 var ErrNoRows = sql.ErrNoRows
 
@@ -28,24 +30,30 @@ func generateSecrets() (DTMF, Secret, error) {
 }
 
 func (db Database) NewSession() (DTMF, Secret, error) {
-	for {
-		dtmf, secret, err := generateSecrets()
+	var err error
+	for attempt := 0; attempt < 10; attempt++ {
+		var dtmf string
+		var secret string
+		dtmf, secret, err = generateSecrets()
 		if err != nil {
 			err = fmt.Errorf("failed to generate secrets: %w", err)
-			log.Print(err)
 			return "", "", err
 		}
 
 		_, err = db.db.Exec("INSERT INTO sessions VALUES ($1, $2, DEFAULT, DEFAULT)", secret, dtmf)
-		// TODO: Continue retrying if error is unique violation.
-		if err != nil {
-			err = fmt.Errorf("failed to insert session in database: %w", err)
-			log.Print(err)
+		pqErr, ok := err.(*pq.Error)
+		if ok && pqErr.Code.Name() == "unique_violation" {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		} else if err != nil {
+			err = fmt.Errorf("failed to store session: %w", err)
 			return "", "", err
 		}
 
 		return dtmf, secret, nil
 	}
+	err = fmt.Errorf("failed to find unique secrets: %w", err)
+	return "", "", err
 }
 
 func (db Database) secretFromDTMF(dtmf string) (string, error) {
