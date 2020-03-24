@@ -12,11 +12,17 @@ import "strings"
 import "time"
 
 import _ "golang.org/x/net/websocket"
+import "github.com/gorilla/websocket"
 import "github.com/privacybydesign/irmago"
 import "github.com/privacybydesign/irmago/server"
 
 type DTMF = string
 type Secret = string
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
 	condiscon, ok := cfg.PurposeToAttributes[purpose]
@@ -78,7 +84,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go cfg.waitForIrmaSession(transport, secret)
+	go cfg.waitForIrmaSession(transport, secret, nil)
 	w.Write(qrJSON)
 }
 
@@ -86,7 +92,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // This function returns the disclosed attributes that were also stored in the
 // database. This can be in case the attributes were requested but not yet
 // stored in the database in order to also retrieve them immediately.
-func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secret string) string {
+func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secret string, tx chan string) string {
 	// TODO: Should detect failure cases that can't be recovered from and abort.
 	var status string
 	for {
@@ -138,6 +144,37 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secre
 	}
 
 	return disclosed
+}
+
+
+func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
+	channel := make(chan string)
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+
+	// TODO get status update messages from somewhere else
+	go func(tx chan string) {
+		for {
+			tx <- "{\"status\": \"test\"}"
+			time.Sleep(1000 * time.Millisecond)
+		}
+	}(channel)
+
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+
+	defer ws.Close()
+
+	for {
+		msg := []byte(<-channel)
+		err = ws.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
+	}
 }
 
 // A citizen has called the service number. Amazon connect picked up and

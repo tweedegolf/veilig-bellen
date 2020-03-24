@@ -96,6 +96,7 @@ func main() {
 
 	http.HandleFunc("/call", cfg.handleCall)
 	http.HandleFunc("/session", cfg.handleSession)
+	http.HandleFunc("/session/status", cfg.handleSessionStatus)
 	http.HandleFunc("/disclose", cfg.handleDisclose)
 	http.ListenAndServe(cfg.ListenAddress, nil)
 }
