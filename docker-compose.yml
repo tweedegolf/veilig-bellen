@@ -68,6 +68,7 @@ services:
     - "/usr/local/bin/yarn"
     - "parcel"
     - "serve"
+    - "--no-hmr"
     - "src/index.html"
     networks:
         - default

@@ -1,5 +1,7 @@
 # Development
-To run this frontend in development, run:
+You can run the top-level project and open [agents.veiligbellen.test.tweede.golf](https://agents.veiligbellen.test.tweede.golf/).
+
+To run this frontend *standalone* in development, run:
 
 ```
 yarn parcel serve --https src/index.html
