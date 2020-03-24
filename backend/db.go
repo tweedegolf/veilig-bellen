@@ -24,8 +24,7 @@ func generateSecrets() (DTMF, Secret, error) {
 	if err != nil {
 		return "", "", err
 	}
-	// TODO: Left-pad dtmf with zeroes in case random number was small.
-	return dtmf.String(), base64.URLEncoding.EncodeToString(secret), nil
+	return fmt.Sprintf("%010d", dtmf), base64.URLEncoding.EncodeToString(secret), nil
 }
 
 func (db Database) NewSession() (DTMF, Secret, error) {
