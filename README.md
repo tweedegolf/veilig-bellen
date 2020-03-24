@@ -16,7 +16,7 @@ After bringing up the docker containers for the first time, the database will
 not have a schema yet. Use the following command to initialize it.
 
 ```bash
-docker exec -i bellen_psql_1 psql -U tg -d tg < database/schema.sql
+docker exec -i veilig-bellen_psql_1 psql -U tg -d tg < database/schema.sql
 ```
 
 ### To run:
