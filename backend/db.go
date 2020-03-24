@@ -2,7 +2,6 @@ package main
 
 import "crypto/rand"
 import "database/sql"
-import "encoding/base64"
 import "fmt"
 import "math/big"
 import "time"
@@ -15,45 +14,40 @@ type Database struct {
 	db *sql.DB
 }
 
-// Generate the secrets for a new session.
-func generateSecrets() (DTMF, Secret, error) {
-	dtmf, err := rand.Int(rand.Reader, big.NewInt(10_000_000_000))
-	if err != nil {
-		return "", "", err
-	}
-	secret := make([]byte, 24)
-	_, err = rand.Read(secret)
-	if err != nil {
-		return "", "", err
-	}
-	return fmt.Sprintf("%010d", dtmf), base64.URLEncoding.EncodeToString(secret), nil
-}
-
-func (db Database) NewSession() (DTMF, Secret, error) {
+func (db Database) NewSession() (DTMF, error) {
 	var err error
 	for attempt := 0; attempt < 10; attempt++ {
-		var dtmf string
-		var secret string
-		dtmf, secret, err = generateSecrets()
+		var n *big.Int
+		n, err = rand.Int(rand.Reader, big.NewInt(10_000_000_000))
 		if err != nil {
-			err = fmt.Errorf("failed to generate secrets: %w", err)
-			return "", "", err
+			return "", err
 		}
 
-		_, err = db.db.Exec("INSERT INTO sessions VALUES ($1, $2, DEFAULT, DEFAULT)", secret, dtmf)
+		dtmf := fmt.Sprintf("%010d", n)
+		if err != nil {
+			err = fmt.Errorf("failed to generate secrets: %w", err)
+			return "", err
+		}
+
+		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, DEFAULT, DEFAULT)", dtmf)
 		pqErr, ok := err.(*pq.Error)
 		if ok && pqErr.Code.Name() == "unique_violation" {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		} else if err != nil {
 			err = fmt.Errorf("failed to store session: %w", err)
-			return "", "", err
+			return "", err
 		}
 
-		return dtmf, secret, nil
+		return dtmf, nil
 	}
 	err = fmt.Errorf("failed to find unique secrets: %w", err)
-	return "", "", err
+	return "", err
+}
+
+func (db Database) storeSecret(dtmf string, secret string) error {
+	_, err := db.db.Exec("UPDATE sessions SET secret = $1 WHERE dtmf = $2", secret, dtmf)
+	return err
 }
 
 func (db Database) secretFromDTMF(dtmf string) (string, error) {

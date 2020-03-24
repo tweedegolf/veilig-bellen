@@ -45,7 +45,7 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	purpose := r.FormValue("purpose")
-	dtmf, secret, err := cfg.db.NewSession()
+	dtmf, err := cfg.db.NewSession()
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -68,6 +68,13 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = cfg.db.storeSecret(dtmf, pkg.Token)
+	if err != nil {
+		log.Printf("failed to store irma secret: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	qr := pkg.SessionPtr
 	// Update the request server URL to include the session token.
 	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
@@ -78,7 +85,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go cfg.waitForIrmaSession(transport, secret)
+	go cfg.waitForIrmaSession(transport, pkg.Token)
 	w.Write(qrJSON)
 }
 
