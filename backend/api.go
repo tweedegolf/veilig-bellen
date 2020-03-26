@@ -44,6 +44,8 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 // object with a valid Irma session response with a tel return url containing
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
+	// This function is responsible for ensuring the irma session secret is
+	// stored in the database before it returns the QR code to the user.
 	purpose := r.FormValue("purpose")
 	dtmf, err := cfg.db.NewSession(purpose)
 	if err != nil {

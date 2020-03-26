@@ -1,5 +1,5 @@
 CREATE TABLE sessions (
-	secret text UNIQUE NOT NULL,
+	secret text,
 	dtmf text UNIQUE NOT NULL,
 	purpose text,
 	disclosed text,
