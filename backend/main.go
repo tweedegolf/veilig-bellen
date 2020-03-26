@@ -84,13 +84,18 @@ func main() {
 	}
 
 	db, err := sql.Open("postgres", cfg.PostgresAddress)
-	// TODO: The pq driver doesn't fail until we try to use the database.
 	if err != nil {
-		panic("could not connect to database")
+		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 	cfg.db = Database{db}
+	// The open call may succeed because the library seems to connect to the
+	// database lazily. Expire old sessions in order to test the connection.
+	err = cfg.db.expire()
+	if err != nil {
+		panic(fmt.Errorf("could not connect to database: %w", err))
+	}
 
-	// TODO: Fail immediately if configured Irma server or configured database
+	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go expireDaemon(cfg)
 
