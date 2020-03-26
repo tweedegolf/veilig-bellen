@@ -45,7 +45,7 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	purpose := r.FormValue("purpose")
-	dtmf, err := cfg.db.NewSession()
+	dtmf, err := cfg.db.NewSession(purpose)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -164,6 +164,11 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type DiscloseResponse struct {
+	Purpose   string          `json:"purpose"`
+	Disclosed json.RawMessage `json:"disclosed"`
+}
+
 // An agent frontend has accepted a call and sends us a GET request with the
 // associated secret. We respond with the disclosed attributes. If the disclosed
 // attributes are not yet available, we synchronously poll the IRMA server to
@@ -175,22 +180,36 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	disclosed, err := cfg.db.getDisclosed(secret)
+	purpose, disclosed, err := cfg.db.getDisclosed(secret)
 	if err == ErrNoRows {
 		// invalid or expired secret
 		http.Error(w, "session not found", http.StatusNotFound)
+		return
 	} else if err != nil {
 		// some database error
 		log.Printf("failed to get disclosed attributes: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	} else if disclosed == "" {
 		// disclosed not set yet
 		// TODO We want to poll the IRMA server here, but we need the IRMA
 		// session token.
 		log.Printf("disclosed attributes not yet received")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
-	} else {
-		// return valid disclosed attributes
-		io.WriteString(w, disclosed)
+		return
 	}
+
+	// return valid disclosed attributes
+	response := DiscloseResponse{
+		Purpose:   purpose,
+		Disclosed: json.RawMessage([]byte(disclosed)),
+	}
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("failed to marshal disclose response: %#v", response)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseJSON)
 }
