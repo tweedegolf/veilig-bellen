@@ -157,8 +157,11 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secre
 func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	dtmf := r.FormValue("dtmf")
 	secret, err := cfg.db.secretFromDTMF(dtmf)
-	if err != nil {
+	if err == ErrNoRows {
 		http.Error(w, "session not found", http.StatusNotFound)
+	} else if err != nil {
+		log.Printf("failed to retrieve secret from dtmf: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 	} else {
 		io.WriteString(w, secret)
 	}
