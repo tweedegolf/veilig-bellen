@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
+    <title>Test website met IRMA Veilig Bellen knop</title>
+
+    <link rel="stylesheet" href="./example.scss" />
+
+    <!-- We include materialize this way just for the example page -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script src="./lib.mjs"></script>
+</head>
+
+<body>
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">Example page</span>
+            <p>
+                This might be any page on your website, detailing some aspect of your organisation.
+                Below there is a button that will start the process of contacting your support callcentre.
+            </p>
+        </div>
+        <div class="card-action">
+            <button class="waves-effect waves-light btn"
+                onClick="veiligBellen.start({ url: 'https://backend.veiligbellen.test.tweede.golf', purpose: 'foo'})">
+                Place your call!
+                <i class="material-icons right">call</i>
+            </button>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -14,8 +14,8 @@ const App = () => {
         setState({ mode: 'establishing', phonenumber });
     };
 
-    const onDisclosure = (disclosure) => {
-        setState(state => ({ ...state, mode: 'disclosed', disclosure }));
+    const onDisclosure = ({ disclosed, purpose }) => {
+        setState(state => ({ ...state, mode: 'disclosed', disclosed, purpose }));
     };
 
     const onConnect = () => {

@@ -25,7 +25,7 @@ paths:
         200:
           description: "Successful operation"
           schema:
-            $ref: "#/definitions/IrmaQr"
+            $ref: "#/definitions/SessionResult"
         404:
           description: "Purpose not defined"
       parameters:
@@ -78,6 +78,14 @@ paths:
           schema:
             $ref: "#/definitions/DiscloseResponse"
 definitions:
+  SessionResult:
+    type: "object"
+    properties:
+      sessionPtr:
+          $ref: "#/definitions/IrmaQr"
+      phonenumber:
+        description: "Number to call"
+        type: "string"
   IrmaQr:
     type: "object"
     properties:
