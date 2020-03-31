@@ -14,7 +14,7 @@ type Database struct {
 	db *sql.DB
 }
 
-func (db Database) NewSession() (DTMF, error) {
+func (db Database) NewSession(purpose string) (DTMF, error) {
 	var err error
 	for attempt := 0; attempt < 10; attempt++ {
 		var n *big.Int
@@ -29,7 +29,7 @@ func (db Database) NewSession() (DTMF, error) {
 			return "", err
 		}
 
-		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, DEFAULT, DEFAULT)", dtmf)
+		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, DEFAULT, DEFAULT)", dtmf, purpose)
 		pqErr, ok := err.(*pq.Error)
 		if ok && pqErr.Code.Name() == "unique_violation" {
 			time.Sleep(100 * time.Millisecond)
@@ -62,11 +62,10 @@ func (db Database) storeDisclosed(secret string, disclosed string) error {
 	return err
 }
 
-func (db Database) getDisclosed(secret string) (string, error) {
-	var disclosed string
-	row := db.db.QueryRow("SELECT disclosed FROM sessions WHERE secret = $1", secret)
-	err := row.Scan(&disclosed)
-	return disclosed, err
+func (db Database) getDisclosed(secret string) (purpose string, disclosed string, err error) {
+	row := db.db.QueryRow("SELECT purpose, disclosed FROM sessions WHERE secret = $1", secret)
+	err = row.Scan(&purpose, &disclosed)
+	return purpose, disclosed, err
 }
 
 func (db Database) expire() error {
