@@ -23,12 +23,12 @@ const Details = ({ data }) => (
     </TableContainer>
 )
 
-const ContactInfo = ({ phonenumber, disclosure }) => (
+const ContactInfo = ({ phonenumber, disclosed, purpose }) => (
     phonenumber ? <Card>
         <CardContent>
             <Details data={
-                [{ key: "phonenumber", value: phonenumber }].concat(
-                    disclosure ? disclosure.flat().map(attr => ({ key: attr.id, value: attr.rawvalue })) : []
+                [{ key: "phonenumber", value: phonenumber }, { key: "purpose", value: purpose }].concat(
+                    disclosed ? disclosed.flat().map(attr => ({ key: attr.id, value: attr.rawvalue })) : []
                 )
             } />
         </CardContent>

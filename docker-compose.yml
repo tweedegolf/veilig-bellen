@@ -51,8 +51,8 @@ services:
     - "app"
     - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
     - "--listen-address=:8080"
-    - "--irma-server=https://irma-noauth.demo.sarif.nl"
-    - "--phone-number=+318000900084"
+    - "--irma-server=http://irma:8088"
+    - "--phone-number=+318000227348"
     - '--purpose-map={"foo":[[["pbdf.gemeente.personalData.over18", "pbdf.gemeente.address.zipcode", "pbdf.gemeente.address.houseNumber"]]]}'
     networks:
       - default
