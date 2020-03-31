@@ -9,17 +9,9 @@ import (
 
 import "github.com/privacybydesign/irmago"
 
-/**
-one thread keeps going over all currently active sessions, wich are in the db
-
-	-> polls irma server for status
-	-> sends status through corresponding channel
-
-Requests can register an irma listener
-*/
-
 var listeners = make(map[string][]chan<- string)
 
+// Register a new irma listener for the given session
 func createIrmaListener(sessionToken string, irmaStatus chan<- string) {
 	if listeners[sessionToken] == nil {
 		listeners[sessionToken] = make([]chan<- string, 0)
@@ -27,7 +19,8 @@ func createIrmaListener(sessionToken string, irmaStatus chan<- string) {
 	listeners[sessionToken] = append(listeners[sessionToken], irmaStatus)
 }
 
-func destroyIrmaListener(sessionToken string) {
+/// Close and drop all listeners for the given sessionToken
+func destroyAllIrmaListeners(sessionToken string) {
 	if listeners[sessionToken] == nil {
 		return
 	}
@@ -38,8 +31,14 @@ func destroyIrmaListener(sessionToken string) {
 	listeners[sessionToken] = nil
 }
 
+// Notify all listeners for the given sessionToken with the status
 func notifyIrmaListeners(sessionToken string, status string) {
-
+	if listeners[sessionToken] == nil {
+		return
+	}
+	for _, irmaStatus := range listeners[sessionToken] {
+		irmaStatus <- status
+	}
 }
 
 // Polls irma server continuously
@@ -52,15 +51,15 @@ func pollDaemon(cfg Configuration) {
 	for range ticker.C {
 		for sessionToken := range listeners {
 			// Update the request server URL to include the session token.
-			transport.Server = cfg.IrmaServerURL + transport.Server + fmt.Sprintf("session/%s/", sessionToken)
+			transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
 			status = pollIrmaSession(transport)
 
 			if status == "" {
-				destroyIrmaListener(sessionToken)
+				destroyAllIrmaListeners(sessionToken)
 			} else {
 				notifyIrmaListeners(sessionToken, status)
 				if status == "DONE" {
-					destroyIrmaListener(sessionToken)
+					destroyAllIrmaListeners(sessionToken)
 				}
 			}
 			time.Sleep(100)

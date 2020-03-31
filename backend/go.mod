@@ -21,7 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.4-0.20190111213756-a45bfec10d59
 	github.com/timshannon/bolthold v0.0.0-20200308034358-09aaf76b2c32 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
-	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
+	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
 )
 
 replace astuart.co/go-sse => github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d
