@@ -53,7 +53,7 @@ services:
     - "--listen-address=:8080"
     - "--irma-server=http://irma:8088"
     - "--phone-number=+318000227348"
-    - '--purpose-map={"foo":[[["pbdf.gemeente.personalData.over18", "pbdf.gemeente.address.zipcode", "pbdf.gemeente.address.houseNumber"]]]}'
+    - '--purpose-map={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}'
     networks:
       - default
     ports: ["127.0.0.1:8080:8080"]
