@@ -32,7 +32,7 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 
 	disclosure := irma.NewDisclosureRequest()
 	disclosure.Disclose = condiscon
-	disclosure.ClientReturnURL = "tel:" + cfg.ServicePhoneNumber + dtmf
+	disclosure.ClientReturnURL = "tel:" + cfg.ServicePhoneNumber + "," + dtmf
 
 	request := &irma.ServiceProviderRequest{
 		Request: disclosure,
@@ -50,8 +50,10 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 // object with a valid Irma session response with a tel return url containing
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
+	// This function is responsible for ensuring the irma session secret is
+	// stored in the database before it returns the QR code to the user.
 	purpose := r.FormValue("purpose")
-	dtmf, secret, err := cfg.db.NewSession()
+	dtmf, err := cfg.db.NewSession(purpose)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -74,6 +76,13 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = cfg.db.storeSecret(dtmf, pkg.Token)
+	if err != nil {
+		log.Printf("failed to store irma secret: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	qr := pkg.SessionPtr
 	// Update the request server URL to include the session token.
 	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
@@ -84,7 +93,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go cfg.waitForIrmaSession(transport, secret, nil)
+	go cfg.waitForIrmaSession(transport, pkg.Token)
 	w.Write(qrJSON)
 }
 
@@ -92,28 +101,9 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // This function returns the disclosed attributes that were also stored in the
 // database. This can be in case the attributes were requested but not yet
 // stored in the database in order to also retrieve them immediately.
-func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secret string, tx chan string) string {
+func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secret string) string {
 	// TODO: Should detect failure cases that can't be recovered from and abort.
-	var status string
-	for {
-		err := transport.Get("status", &status)
-		if err != nil {
-			log.Printf("failed to get irma session status: %v", err)
-			time.Sleep(time.Second)
-			continue
-		}
-		status = strings.Trim(status, `"`)
-		if status == "INITIALIZED" || status == "CONNECTED" {
-			time.Sleep(time.Second)
-			continue
-		} else if status == "DONE" {
-			// TODO: Update citizen frontend.
-			break
-		} else {
-			// TODO: Update citizen frontend.
-			return ""
-		}
-	}
+	var status = cfg.pollIrmaSession(transport, nil)
 
 	// At this point, the IRMA session is done.
 	result := &server.SessionResult{}
@@ -146,19 +136,41 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secre
 	return disclosed
 }
 
+func (cfg Configuration) pollIrmaSession(transport *irma.HTTPTransport, tx chan string) string {
+	var status string
+	for {
+		err := transport.Get("status", &status)
+		if err != nil {
+			log.Printf("failed to get irma session status: %v", err)
+			time.Sleep(time.Second)
+			continue
+		}
+		status = strings.Trim(status, `"`)
+		if (tx != nil) {
+			tx <- status
+		}
+		if status == "INITIALIZED" || status == "CONNECTED" {
+			time.Sleep(time.Second)
+			continue
+		} else if status == "DONE" {
+			// TODO: Update citizen frontend.
+			return status
+		} else {
+			// TODO: Update citizen frontend.
+			return ""
+		}
+	}
+}
 
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
 	channel := make(chan string)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 
-	// TODO get status update messages from somewhere else
-	go func(tx chan string) {
-		for {
-			tx <- "{\"status\": \"test\"}"
-			time.Sleep(1000 * time.Millisecond)
-		}
-	}(channel)
+	var pkg server.SessionPackage
+	transport := irma.NewHTTPTransport(cfg.IrmaServerURL + fmt.Sprintf("session/%s/", pkg.Token))
+
+	go cfg.pollIrmaSession(transport, channel)
 
 	if err != nil {
 		log.Print("upgrade:", err)
@@ -187,11 +199,19 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	dtmf := r.FormValue("dtmf")
 	secret, err := cfg.db.secretFromDTMF(dtmf)
-	if err != nil {
+	if err == ErrNoRows {
 		http.Error(w, "session not found", http.StatusNotFound)
+	} else if err != nil {
+		log.Printf("failed to retrieve secret from dtmf: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 	} else {
 		io.WriteString(w, secret)
 	}
+}
+
+type DiscloseResponse struct {
+	Purpose   string          `json:"purpose"`
+	Disclosed json.RawMessage `json:"disclosed"`
 }
 
 // An agent frontend has accepted a call and sends us a GET request with the
@@ -205,22 +225,36 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	disclosed, err := cfg.db.getDisclosed(secret)
+	purpose, disclosed, err := cfg.db.getDisclosed(secret)
 	if err == ErrNoRows {
 		// invalid or expired secret
 		http.Error(w, "session not found", http.StatusNotFound)
+		return
 	} else if err != nil {
 		// some database error
 		log.Printf("failed to get disclosed attributes: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	} else if disclosed == "" {
 		// disclosed not set yet
 		// TODO We want to poll the IRMA server here, but we need the IRMA
 		// session token.
 		log.Printf("disclosed attributes not yet received")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
-	} else {
-		// return valid disclosed attributes
-		io.WriteString(w, disclosed)
+		return
 	}
+
+	// return valid disclosed attributes
+	response := DiscloseResponse{
+		Purpose:   purpose,
+		Disclosed: json.RawMessage([]byte(disclosed)),
+	}
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("failed to marshal disclose response: %#v", response)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseJSON)
 }
