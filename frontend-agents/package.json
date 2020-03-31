@@ -1,0 +1,31 @@
+{
+  "name": "frontend-agents",
+  "version": "1.0.0",
+  "description": "Frontend for IRMA bellen agents",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@material-ui/core": "^4.9.7",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.46",
+    "amazon-connect-streams": "^1.4.5",
+    "axios": "^0.19.2",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "socket.io-client": "^2.3.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.0.0-alpha.3.2",
+    "sass": "^1.26.2"
+  },
+  "targets": {
+    "main": {
+      "engines": {
+        "browsers": [
+          "> 1%",
+          "not dead"
+        ]
+      }
+    }
+  }
+}
