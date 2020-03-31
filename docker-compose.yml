@@ -71,8 +71,10 @@ services:
     - "serve"
     - "--no-hmr"
     - "src/index.html"
+    environment:
+    - HOME=/tmp/nodehome
     networks:
-        - default
+    - default
     expose: [1234]
 
   frontend_public:
@@ -87,8 +89,10 @@ services:
     - "serve"
     - "--no-hmr"
     - "src/example.html"
+    environment:
+    - HOME=/tmp/nodehome
     networks:
-        - default
+    - default
     expose: [1234]
 
   psql:
