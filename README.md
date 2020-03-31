@@ -37,3 +37,11 @@ bin/up.sh
 5. Copy the secret it returns.
 6. Go to `localhost:8080/disclose?secret=` followed by the copied secret. The
    Irma attributes should be returned.
+
+### To build:
+
+#### Frontend public library
+
+```bash
+docker-compose run frontend_public yarn run build
+```
