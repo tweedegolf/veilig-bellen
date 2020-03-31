@@ -76,8 +76,7 @@ paths:
         200:
           description: "Successful operation"
           schema:
-            type: "object"
-            description: "List of disclosed IRMA attributes"
+            $ref: "#/definitions/DiscloseResponse"
 definitions:
   IrmaQr:
     type: "object"
@@ -89,3 +88,14 @@ definitions:
       irmaqr:
         description: "State of the IRMA session"
         type: "string"
+  DiscloseResponse:
+    type: "object"
+    properties:
+      purpose:
+        type: "string"
+        description: >
+          A predefined purpose for this session
+          determines condiscon
+      disclosed:
+        type: "object"
+        description: "List of disclosed IRMA attributes"
