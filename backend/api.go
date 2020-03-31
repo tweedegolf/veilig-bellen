@@ -8,10 +8,8 @@ import "fmt"
 import "io"
 import "log"
 import "net/http"
-import "strings"
 import "time"
 
-import _ "golang.org/x/net/websocket"
 import "github.com/gorilla/websocket"
 import "github.com/privacybydesign/irmago"
 import "github.com/privacybydesign/irmago/server"
@@ -84,8 +82,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	qr := pkg.SessionPtr
-	// Update the request server URL to include the session token.
-	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
+
 	qrJSON, err := json.Marshal(qr)
 	if err != nil {
 		log.Printf("failed to marshal QR code: %v", err)
@@ -101,9 +98,22 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // This function returns the disclosed attributes that were also stored in the
 // database. This can be in case the attributes were requested but not yet
 // stored in the database in order to also retrieve them immediately.
-func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secret string) string {
+func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
 	// TODO: Should detect failure cases that can't be recovered from and abort.
-	var status = cfg.pollIrmaSession(transport, nil)
+	irmaStatus := make(chan string)
+	createIrmaListener(sessionToken, irmaStatus)
+
+	var status string
+	for status = range irmaStatus {
+		if status == "INITIALIZED" || status == "CONNECTED" {
+			time.Sleep(time.Second)
+			continue
+		} else if status == "DONE" {
+			break
+		} else {
+			return ""
+		}
+	}
 
 	// At this point, the IRMA session is done.
 	result := &server.SessionResult{}
@@ -127,7 +137,7 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secre
 	}
 
 	disclosed := string(disclosedJSON)
-	err = cfg.db.storeDisclosed(secret, disclosed)
+	err = cfg.db.storeDisclosed(sessionToken, disclosed)
 	if err != nil {
 		log.Printf("failed to store disclosed attributes: %v", err)
 		return disclosed
@@ -136,42 +146,12 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secre
 	return disclosed
 }
 
-func (cfg Configuration) pollIrmaSession(transport *irma.HTTPTransport, tx chan string) string {
-	var status string
-	for {
-		err := transport.Get("status", &status)
-		if err != nil {
-			log.Printf("failed to get irma session status: %v", err)
-			time.Sleep(time.Second)
-			continue
-		}
-		status = strings.Trim(status, `"`)
-		if (tx != nil) {
-			tx <- status
-		}
-		if status == "INITIALIZED" || status == "CONNECTED" {
-			time.Sleep(time.Second)
-			continue
-		} else if status == "DONE" {
-			// TODO: Update citizen frontend.
-			return status
-		} else {
-			// TODO: Update citizen frontend.
-			return ""
-		}
-	}
-}
-
+// Upgrade connection to websocket, start polling IRMA session,
+// Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
-	channel := make(chan string)
+	irmaStatus := make(chan string)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
-
-	var pkg server.SessionPackage
-	transport := irma.NewHTTPTransport(cfg.IrmaServerURL + fmt.Sprintf("session/%s/", pkg.Token))
-
-	go cfg.pollIrmaSession(transport, channel)
-
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
@@ -179,8 +159,14 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	defer ws.Close()
 
-	for {
-		msg := []byte(<-channel)
+
+	// TODO: get token from request
+	token := "test"
+
+	createIrmaListener(token, irmaStatus)
+
+	for status := range irmaStatus {
+		msg := []byte(status)
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println("write:", err)

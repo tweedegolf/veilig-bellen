@@ -103,6 +103,7 @@ func main() {
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go expireDaemon(cfg)
+	go pollDaemon(cfg)
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
