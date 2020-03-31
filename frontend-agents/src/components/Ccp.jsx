@@ -3,6 +3,7 @@ import axios from 'axios';
 
 import 'amazon-connect-streams';
 
+// TODO change to ENV variables in parcel build process.
 const vbServerDisclose = 'https://backend.veiligbellen.test.tweede.golf/disclose';
 const ccpUrl = 'https://sarif.awsapps.com/connect/ccp-v2';
 
@@ -47,14 +48,14 @@ const Ccp = ({ setError, onContact, onDisclosure, onConnect, onDisconnect }) => 
                     onDisconnect();
                 });
 
-                const attributes = contact.getAttributes();
+                const callAttributes = contact.getAttributes();
 
-                onContact(attributes.phonenumber.value);
+                onContact(callAttributes.phonenumber.value);
 
-                console.log('attributes', attributes);
+                console.log('callAttributes', callAttributes);
                 const response = await axios.get(vbServerDisclose, {
                     params: {
-                        secret: attributes.session_secret.value,
+                        secret: callAttributes.session_secret.value,
                     },
                 });
 

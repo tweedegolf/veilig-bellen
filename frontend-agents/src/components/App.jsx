@@ -11,7 +11,7 @@ const App = () => {
     const [error, setError] = useState(null);
 
     const onContact = (phonenumber) => {
-        setState({ mode: 'connected', phonenumber });
+        setState({ mode: 'establishing', phonenumber });
     };
 
     const onDisclosure = ({ disclosed, purpose }) => {
