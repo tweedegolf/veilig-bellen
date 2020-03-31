@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "build": "NODE_ENV=production parcel build --no-source-maps -d dist --target browser --bundle-node-modules src/lib.mjs"
+  },
   "dependencies": {
     "@privacybydesign/irmajs": "^0.1.9",
     "axios": "^0.19.2",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
-    "parcel": "^2.0.0-alpha.3.2",
+    "parcel": "^1.12.4",
     "sass": "^1.26.2"
   },
   "targets": {
