@@ -6,14 +6,22 @@ let
   };
 
   inherit (nix-npm-buildpackage) buildYarnPackage;
+  inherit (pkgs.nix-gitignore) gitignoreSource;
+
   frontend-public = buildYarnPackage {
-    name = "frontend-public.js";
-    src = ./frontend-public;
+    name = "veilig-bellen-frontend-public.js";
+    src = gitignoreSource [] ./frontend-public;
     installPhase = ''
       mv dist/lib.js $out
     '';
   };
 
+  backend = pkgs.buildGoModule {
+    name = "veilig-bellen-backend";
+    src = gitignoreSource [] ./backend;
+    modSha256 = "1864h9gbyp4pmxwbxi28h0rn6sh120v0kyb3yviikdkkgjcw40my";
+  };
+
 in {
-  inherit frontend-public;
+  inherit backend frontend-public;
 }
