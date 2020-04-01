@@ -10,7 +10,7 @@ let
 
   frontend-public = buildYarnPackage {
     name = "veilig-bellen-frontend-public.js";
-    src = gitignoreSource [] ./frontend-public;
+    src = gitignoreSource [ ] ./frontend-public;
     installPhase = ''
       mv dist/lib.js $out
     '';
@@ -18,10 +18,16 @@ let
 
   backend = pkgs.buildGoModule {
     name = "veilig-bellen-backend";
-    src = gitignoreSource [] ./backend;
+    src = gitignoreSource [ ] ./backend;
     modSha256 = "1864h9gbyp4pmxwbxi28h0rn6sh120v0kyb3yviikdkkgjcw40my";
   };
 
-in {
-  inherit backend frontend-public;
-}
+  backend-image = pkgs.dockerTools.buildImage {
+    name = "veilig-bellen-backend";
+    tag = "latest";
+    contents = pkgs.stdenvNoCC.initialPath
+      ++ (with pkgs; [ backend bashInteractive busybox cacert ]);
+    config.Cmd = [ "backend" ];
+  };
+
+in { inherit backend backend-image frontend-public; }
