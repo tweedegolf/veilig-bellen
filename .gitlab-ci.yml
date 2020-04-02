@@ -1,0 +1,13 @@
+backend-image:
+  script: nix-build -A backend-image
+  artifacts:
+    paths:
+    - result
+    expire_in: 2 weeks
+
+frontend-public:
+  script: nix-build -A frontend-public
+  artifacts:
+    paths:
+    - result
+    expire_in: 2 weeks
