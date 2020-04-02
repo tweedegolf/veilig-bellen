@@ -1,13 +1,12 @@
-backend-image:
-  script: nix-build -A backend-image
+backend-image: &standard-build
+  stage: build
+  script:
+  - "nix-build -A $CI_JOB_NAME"
+  - "cp $(realpath result) result-copy"
   artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     paths:
-    - result
+    - result-copy
     expire_in: 2 weeks
 
-frontend-public:
-  script: nix-build -A frontend-public
-  artifacts:
-    paths:
-    - result
-    expire_in: 2 weeks
+frontend-public: *standard-build
