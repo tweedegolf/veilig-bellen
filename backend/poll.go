@@ -28,7 +28,7 @@ func destroyAllIrmaListeners(sessionToken string) {
 	for _, irmaStatus := range listeners[sessionToken] {
 		close(irmaStatus)
 	}
-	listeners[sessionToken] = nil
+	delete(listeners, sessionToken)
 }
 
 // Notify all listeners for the given sessionToken with the status
@@ -53,15 +53,16 @@ func pollDaemon(cfg Configuration) {
 			// Update the request server URL to include the session token.
 			transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
 			status = pollIrmaSession(transport)
-
+			
 			if status == "" {
-				destroyAllIrmaListeners(sessionToken)
-			} else {
-				notifyIrmaListeners(sessionToken, status)
-				if status == "DONE" {
-					destroyAllIrmaListeners(sessionToken)
-				}
+				status = "ERR"
 			}
+
+			notifyIrmaListeners(sessionToken, status)
+			if shouldStopPolling(status) {
+				destroyAllIrmaListeners(sessionToken)
+			}
+
 			time.Sleep(100)
 		}
 
@@ -80,4 +81,10 @@ func pollIrmaSession(transport *irma.HTTPTransport) string {
 		return ""
 	}
 	return strings.Trim(status, `"`)
+}
+
+// Decides whether we should stop polling based on a returned
+// irma status message
+func shouldStopPolling(status string) bool {
+	return status == "DONE" || status == "TIMEOUT" || status == "CANCELLED" || status == "ERR"
 }

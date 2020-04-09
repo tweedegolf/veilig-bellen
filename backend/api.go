@@ -23,8 +23,8 @@ var upgrader = websocket.Upgrader{
 }
 
 type SessionResponse struct {
-	SessionPtr     *irma.Qr    `json:"sessionPtr,omitempty"`
-	Phonenumber    string      `json:"phonenumber,omitempty"`
+	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
+	Phonenumber string   `json:"phonenumber,omitempty"`
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
@@ -33,7 +33,7 @@ func (cfg Configuration) phonenumber(dtmf string) string {
 
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
 	condiscon, ok := cfg.PurposeToAttributes[purpose]
-	if !ok { 
+	if !ok {
 		return nil, fmt.Errorf("unknown call purpose: %#v", purpose)
 	}
 
@@ -90,7 +90,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session SessionResponse;
+	var session SessionResponse
 	session.SessionPtr = pkg.SessionPtr
 	session.Phonenumber = cfg.phonenumber(dtmf)
 
@@ -146,7 +146,7 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 	disclosedJSON, err := json.Marshal(disclosedData)
 	if err != nil {
 		log.Printf("failed to marshal disclosed attributes: %v", err)
-		return ""
+		return "" 
 	}
 
 	disclosed := string(disclosedJSON)
@@ -172,17 +172,20 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	defer ws.Close()
 
+	sessionToken := r.FormValue("token")
+	if sessionToken == "" {
+		http.Error(w, "No token passed", http.StatusBadRequest)
+		return
+	}
 
-	// TODO: get token from request
-	token := "test"
-
-	createIrmaListener(token, irmaStatus)
+	createIrmaListener(sessionToken, irmaStatus)
 
 	for status := range irmaStatus {
 		msg := []byte(status)
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println("write:", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			break
 		}
 	}

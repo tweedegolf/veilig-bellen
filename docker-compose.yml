@@ -49,7 +49,7 @@ services:
     command:
     - "/bin/app/watch.sh"
     - "app"
-    - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
+    - "--database=postgres://irmabellen@psql:5432/irmabellen?sslmode=disable"
     - "--listen-address=:8080"
     - "--irma-server=http://irma:8088"
     - "--phone-number=+318000227348"
