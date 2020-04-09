@@ -114,7 +114,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
 	// TODO: Should detect failure cases that can't be recovered from and abort.
 	irmaStatus := make(chan string)
-	cfg.createIrmaListener(sessionToken, irmaStatus)
+	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
 
 	var status string
 	for status = range irmaStatus {
@@ -178,7 +178,7 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	cfg.createIrmaListener(sessionToken, irmaStatus)
+	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
 
 	for status := range irmaStatus {
 		msg := []byte(status)

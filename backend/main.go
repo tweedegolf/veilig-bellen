@@ -24,7 +24,7 @@ type Configuration struct {
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
-	irmaListeners	 	map[string][]chan<- string
+	irmaPoll		 	IrmaPoll
 }
 
 func main() {
@@ -94,7 +94,8 @@ func main() {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 	cfg.db = Database{db}
-	cfg.irmaListeners = make(map[string][]chan<- string)
+
+	cfg.irmaPoll = makeIrmaPoll()
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()

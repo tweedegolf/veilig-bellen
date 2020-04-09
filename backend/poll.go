@@ -9,47 +9,94 @@ import (
 
 import "github.com/privacybydesign/irmago"
 
+type createOp struct {
+	sessionToken string
+	listener     chan<- string
+}
+
+type destroyOp struct {
+	sessionToken string
+}
+
+type notifyOp struct {
+	sessionToken string
+	status       string
+}
+
+// Irma polling facade type
+type IrmaPoll struct {
+	listeners  map[string][]chan<- string
+	createOps  chan createOp
+	destroyOps chan destroyOp
+	notifyOps  chan notifyOp
+}
+
+// Create a new IrmaPoll
+func makeIrmaPoll() IrmaPoll {
+	listeners := make(map[string][]chan<- string)
+	createOps := make(chan createOp)
+	destroyOps := make(chan destroyOp)
+	notifyOps := make(chan notifyOp)
+	return IrmaPoll{listeners, createOps, destroyOps, notifyOps}
+}
+
 // Register a new irma listener for the given session
-func (cfg Configuration) createIrmaListener(sessionToken string, irmaStatus chan<- string) {
-	cfg.irmaListeners[sessionToken] = append(cfg.irmaListeners[sessionToken], irmaStatus)
+func (poll IrmaPoll) createIrmaListener(sessionToken string, irmaStatus chan<- string) {
+	poll.createOps <- createOp{sessionToken, irmaStatus}
 }
 
 /// Close and drop all listeners for the given sessionToken
-func (cfg Configuration) destroyAllIrmaListeners(sessionToken string) {
-	for _, irmaStatus := range cfg.irmaListeners[sessionToken] {
-		close(irmaStatus)
-	}
-	delete(cfg.irmaListeners, sessionToken)
+func (poll IrmaPoll) destroyAllIrmaListeners(sessionToken string) {
+	poll.destroyOps <- destroyOp{sessionToken}
 }
 
 // Notify all listeners for the given sessionToken with the status
-func (cfg Configuration) notifyIrmaListeners(sessionToken string, status string) {
-	for _, irmaStatus := range cfg.irmaListeners[sessionToken] {
-		irmaStatus <- status
-	}
+func (poll IrmaPoll) notifyListeners(sessionToken string, status string) {
+	poll.notifyOps <- notifyOp{sessionToken, status}
 }
 
-// Polls irma server continuously
+// Polls irma server continuously. Each registered sessionToken is polled once
+// every second.
+// Handles listener creation, destroy, and notification operation
+// messages.
 func pollDaemon(cfg Configuration) {
 	transport := irma.NewHTTPTransport("")
 	ticker := time.NewTicker(1000 * time.Millisecond)
+	poll := &cfg.irmaPoll
 
 	var status string
-	for range ticker.C {
-		for sessionToken := range cfg.irmaListeners {
-			go func() {
-				// Update the request server URL to include the session token.
-				transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
-				status = pollIrmaSession(transport)
 
-				cfg.notifyIrmaListeners(sessionToken, status)
-				if shouldStopPolling(status) {
-					cfg.destroyAllIrmaListeners(sessionToken)
+	for {
+		select {
+		case <-ticker.C:
+			// Do the polling in the background in case this takes a long time.
+			// This guarantees sessions are polled every second
+			go func() {
+				for sessionToken := range poll.listeners {
+					// Update the request server URL to include the session token.
+					transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
+					status = pollIrmaSession(transport)
+
+					poll.notifyListeners(sessionToken, status)
+					if shouldStopPolling(status) {
+						poll.destroyAllIrmaListeners(sessionToken)
+					}
 				}
 			}()
-			time.Sleep(10)
+		case op := <-poll.createOps:
+			poll.listeners[op.sessionToken] = append(poll.listeners[op.sessionToken], op.listener)
+		case op := <-poll.destroyOps:
+			for _, irmaStatus := range poll.listeners[op.sessionToken] {
+				close(irmaStatus)
+			}
+			delete(poll.listeners, op.sessionToken)
+		case op := <-poll.notifyOps:
+			for _, irmaStatus := range poll.listeners[op.sessionToken] {
+				irmaStatus <- status
+			}
 		}
 	}
+	log.Printf("Stopped polling Irma server")
 }
 
 // Poll the irma session
