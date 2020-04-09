@@ -114,7 +114,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
 	// TODO: Should detect failure cases that can't be recovered from and abort.
 	irmaStatus := make(chan string)
-	createIrmaListener(sessionToken, irmaStatus)
+	cfg.createIrmaListener(sessionToken, irmaStatus)
 
 	var status string
 	for status = range irmaStatus {
@@ -166,7 +166,7 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Print("upgrade:", err)
+		log.Println("failed to upgrade session status connection:", err)
 		return
 	}
 
@@ -178,13 +178,13 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	createIrmaListener(sessionToken, irmaStatus)
+	cfg.createIrmaListener(sessionToken, irmaStatus)
 
 	for status := range irmaStatus {
 		msg := []byte(status)
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
-			log.Println("write:", err)
+			log.Println("failed to write session status:", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			break
 		}
