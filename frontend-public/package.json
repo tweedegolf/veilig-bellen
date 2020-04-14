@@ -7,8 +7,10 @@
     "build": "NODE_ENV=production parcel build --no-source-maps -d dist --target browser --bundle-node-modules src/lib.mjs"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.8.7",
     "@privacybydesign/irmajs": "^0.1.9",
     "axios": "^0.19.2",
+    "babel-polyfill": "^6.26.0",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {

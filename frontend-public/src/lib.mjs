@@ -1,3 +1,4 @@
+import "babel-polyfill";
 import axios from 'axios';
 import qrcode from 'qrcode-terminal';
 import { handleSession } from '@privacybydesign/irmajs';
