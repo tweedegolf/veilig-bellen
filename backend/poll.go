@@ -37,10 +37,10 @@ func (poll IrmaPoll) createIrmaListener(sessionToken string, irmaStatus chan<- s
 // never blocks the pollDaemon if the listener is never received from.
 func tryNotifyListener(listener chan<- string, status string) {
 	select {
-		case listener <- status:
-		default:
-			// Message discarded
-		}
+	case listener <- status:
+	default:
+		// Message discarded
+	}
 }
 
 // Polls irma server continuously. Each registered sessionToken is polled once

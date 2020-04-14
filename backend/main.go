@@ -7,7 +7,7 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
- 
+
 import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
 import _ "github.com/lib/pq"
@@ -24,7 +24,7 @@ type Configuration struct {
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
-	irmaPoll		 	IrmaPoll
+	irmaPoll            IrmaPoll
 }
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 	internalAddress := flag.String("internal-address", "", `The address to listen for internal requests such as /call. Defaults to listen-address.`)
 	irmaServer := flag.String("irma-server", "", `The address of the IRMA server to use for disclosure.`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
-	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`) 
+	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
 
 	flag.Parse()
 
