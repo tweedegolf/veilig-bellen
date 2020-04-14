@@ -24,7 +24,7 @@ type Configuration struct {
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
-	irmaPoll		 	IrmaPoll
+	irmaPoll            IrmaPoll
 }
 
 func main() {

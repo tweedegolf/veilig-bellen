@@ -146,7 +146,7 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 	disclosedJSON, err := json.Marshal(disclosedData)
 	if err != nil {
 		log.Printf("failed to marshal disclosed attributes: %v", err)
-		return "" 
+		return ""
 	}
 
 	disclosed := string(disclosedJSON)
