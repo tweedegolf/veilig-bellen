@@ -260,3 +260,28 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 
 	w.Write(responseJSON)
 }
+
+func (cfg Configuration) handleWaitlistFeed(w http.ResponseWriter, r *http.Request) {
+	waitListStatus := make(chan Update)
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("failed to upgrade session status connection:", err)
+		return
+	}
+
+	defer ws.Close()
+
+	cfg.waitlistBroadcast.registerListener(waitListStatus)
+
+	for update := range waitListStatus {
+		msg := []byte(update.msg)
+		err = ws.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			log.Println("failed to write session status:", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			break
+		}
+	}
+	cfg.waitlistBroadcast.unregisterListener(waitListStatus, false)
+}
