@@ -49,7 +49,7 @@ services:
     command:
     - "/bin/app/watch.sh"
     - "app"
-    - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
+    - "--database=postgres://irmabellen@psql:5432/irmabellen?sslmode=disable"
     - "--listen-address=:8080"
     - "--irma-server=http://irma:8088"
     - "--phone-number=+318000227348"
@@ -98,10 +98,11 @@ services:
   psql:
     image: "postgres:12"
     environment:
-        POSTGRES_USER: tg
-        POSTGRES_DB: tg
+        POSTGRES_USER: irmabellen
+        POSTGRES_DB: irmabellen
         TZ: Europe/Amsterdam
         POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ["127.0.0.1:5433:5432"]
     networks: [default]
 
 networks:

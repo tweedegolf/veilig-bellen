@@ -7,7 +7,7 @@ const veiligBellen = {
     start: async ({ url, purpose }) => {
         // TODO better error handling
         const response = await axios.get(`${url}/session`, { params: { purpose } });
-
+        
         if (response.status !== 200) {
             console.error(response.statusCode);
             return;

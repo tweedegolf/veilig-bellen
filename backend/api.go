@@ -8,19 +8,23 @@ import "fmt"
 import "io"
 import "log"
 import "net/http"
-import "strings"
 import "time"
 
-import _ "golang.org/x/net/websocket"
+import "github.com/gorilla/websocket"
 import "github.com/privacybydesign/irmago"
 import "github.com/privacybydesign/irmago/server"
 
 type DTMF = string
 type Secret = string
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 type SessionResponse struct {
-	SessionPtr     *irma.Qr    `json:"sessionPtr,omitempty"`
-	Phonenumber    string      `json:"phonenumber,omitempty"`
+	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
+	Phonenumber string   `json:"phonenumber,omitempty"`
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
@@ -86,7 +90,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session SessionResponse;
+	var session SessionResponse
 	session.SessionPtr = pkg.SessionPtr
 	session.Phonenumber = cfg.phonenumber(dtmf)
 
@@ -107,25 +111,19 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // This function returns the disclosed attributes that were also stored in the
 // database. This can be in case the attributes were requested but not yet
 // stored in the database in order to also retrieve them immediately.
-func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secret string) string {
+func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
 	// TODO: Should detect failure cases that can't be recovered from and abort.
+	irmaStatus := make(chan string)
+	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
+
 	var status string
-	for {
-		err := transport.Get("status", &status)
-		if err != nil {
-			log.Printf("failed to get irma session status: %v", err)
-			time.Sleep(time.Second)
-			continue
-		}
-		status = strings.Trim(status, `"`)
+	for status = range irmaStatus {
 		if status == "INITIALIZED" || status == "CONNECTED" {
 			time.Sleep(time.Second)
 			continue
 		} else if status == "DONE" {
-			// TODO: Update citizen frontend.
 			break
 		} else {
-			// TODO: Update citizen frontend.
 			return ""
 		}
 	}
@@ -148,17 +146,49 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, secre
 	disclosedJSON, err := json.Marshal(disclosedData)
 	if err != nil {
 		log.Printf("failed to marshal disclosed attributes: %v", err)
-		return ""
+		return "" 
 	}
 
 	disclosed := string(disclosedJSON)
-	err = cfg.db.storeDisclosed(secret, disclosed)
+	err = cfg.db.storeDisclosed(sessionToken, disclosed)
 	if err != nil {
 		log.Printf("failed to store disclosed attributes: %v", err)
 		return disclosed
 	}
 
 	return disclosed
+}
+
+// Upgrade connection to websocket, start polling IRMA session,
+// Send IRMA session updates over websocket
+func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
+	irmaStatus := make(chan string)
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("failed to upgrade session status connection:", err)
+		return
+	}
+
+	defer ws.Close()
+
+	sessionToken := r.FormValue("token")
+	if sessionToken == "" {
+		http.Error(w, "No token passed", http.StatusBadRequest)
+		return
+	}
+
+	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
+
+	for status := range irmaStatus {
+		msg := []byte(status)
+		err = ws.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			log.Println("failed to write session status:", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			break
+		}
+	}
 }
 
 // A citizen has called the service number. Amazon connect picked up and
