@@ -34,5 +34,17 @@
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs-channels/archive/05f0934825c2a0750d4888c4735f9420c906b388.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "vgo2nix": {
+        "branch": "fix-replace-handling",
+        "description": null,
+        "homepage": null,
+        "owner": "Lucus16",
+        "repo": "vgo2nix",
+        "rev": "b967e7202b06a0aa7ad4d1fc783e1938e93bed07",
+        "sha256": "1vlhp1miymxxgircz52yvsnc38m5hdmxdi7pzqqi4liwwl6rj0p1",
+        "type": "tarball",
+        "url": "https://github.com/Lucus16/vgo2nix/archive/b967e7202b06a0aa7ad4d1fc783e1938e93bed07.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }

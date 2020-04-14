@@ -5,6 +5,8 @@ let
     nodejs-10_x = pkgs.nodejs-13_x;
   };
 
+  vgo2nix = import sources.vgo2nix { inherit pkgs; };
+
   inherit (nix-npm-buildpackage) buildYarnPackage;
   inherit (pkgs.nix-gitignore) gitignoreSource;
 
@@ -16,10 +18,11 @@ let
     '';
   };
 
-  backend = pkgs.buildGoModule {
+  backend = pkgs.buildGoPackage {
     name = "veilig-bellen-backend";
     src = gitignoreSource [ ] ./backend;
-    modSha256 = "1864h9gbyp4pmxwbxi28h0rn6sh120v0kyb3yviikdkkgjcw40my";
+    goDeps = backend/deps.nix;
+    goPackagePath = "github.com/tweedegolf/veilig-bellen/backend";
   };
 
   backend-image = pkgs.dockerTools.buildImage {
