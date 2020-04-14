@@ -32,6 +32,17 @@ func (poll IrmaPoll) createIrmaListener(sessionToken string, irmaStatus chan<- s
 	poll.createOps <- createOp{sessionToken, irmaStatus}
 }
 
+// Try to send a status update. If the channel's buffer is full,
+// the status update is discarded. This way, sending status messages
+// never blocks the pollDaemon if the listener is never received from.
+func tryNotifyListener(listener chan<- string, status string) {
+	select {
+		case listener <- status:
+		default:
+			// Message discarded
+		}
+}
+
 // Polls irma server continuously. Each registered sessionToken is polled once
 // every second.
 // Handles listener creation, destroy, and notification operation
@@ -52,7 +63,7 @@ func pollDaemon(cfg Configuration) {
 				status = pollIrmaSession(transport)
 				// Notify all channels
 				for _, irmaStatus := range statusChannels {
-					irmaStatus <- status
+					tryNotifyListener(irmaStatus, status)
 				}
 				if shouldStopPolling(status) {
 					// Close and delete all listeners for this channel
