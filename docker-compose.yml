@@ -102,6 +102,7 @@ services:
         POSTGRES_DB: tg
         TZ: Europe/Amsterdam
         POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ["127.0.0.1:5433:5432"]
     networks: [default]
 
 networks:

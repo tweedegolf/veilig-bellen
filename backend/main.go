@@ -24,6 +24,7 @@ type Configuration struct {
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
+	irmaPoll            IrmaPoll
 }
 
 func main() {
@@ -93,6 +94,8 @@ func main() {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 	cfg.db = Database{db}
+
+	cfg.irmaPoll = makeIrmaPoll()
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
@@ -103,10 +106,12 @@ func main() {
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go expireDaemon(cfg)
+	go pollDaemon(cfg)
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
+	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()
