@@ -1,16 +1,20 @@
 package main
 
-import "database/sql"
-import "encoding/json"
-import "fmt"
-import "io/ioutil"
-import "log"
-import "net/http"
-import "time"
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
 
-import "github.com/privacybydesign/irmago"
-import flag "github.com/spf13/pflag"
-import _ "github.com/lib/pq"
+	irma "github.com/privacybydesign/irmago"
+
+	flag "github.com/spf13/pflag"
+
+	_ "github.com/lib/pq"
+)
 
 // Every backend node will ask the database to expire old sessions once every
 // ExpireDelay

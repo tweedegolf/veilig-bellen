@@ -262,7 +262,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg Configuration) handleWaitlistFeed(w http.ResponseWriter, r *http.Request) {
-	waitListStatus := make(chan Update)
+	waitListStatus := make(chan string)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -275,7 +275,7 @@ func (cfg Configuration) handleWaitlistFeed(w http.ResponseWriter, r *http.Reque
 	cfg.waitlistBroadcast.registerListener(waitListStatus)
 
 	for update := range waitListStatus {
-		msg := []byte(update.msg)
+		msg := []byte(update)
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println("failed to write session status:", err)
