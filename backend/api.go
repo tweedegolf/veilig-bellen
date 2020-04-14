@@ -217,7 +217,7 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	} else {
 		io.WriteString(w, secret)
-		cfg.irmaPoll.tryNotifyListeners(secret, "CALLED")
+		cfg.irmaPoll.tryNotify(secret, "CALLED")
 		log.Printf("someone called %v", secret)
 	}
 }
