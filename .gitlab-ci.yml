@@ -1,12 +1,14 @@
-backend-image: &standard-build
+frontend-public: &standard-build
   stage: build
   script:
-  - "nix-build -A $CI_JOB_NAME"
-  - "cp $(realpath result) result-copy"
+  - "cp $(nix-build --no-out-link -A $CI_JOB_NAME) $CI_JOB_NAME-$CI_COMMIT_REF_NAME"
   artifacts:
-    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     paths:
-    - result-copy
+    - "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 2 weeks
 
-frontend-public: *standard-build
+backend-image:
+  <<: *standard-build
+  script:
+  - "nix-shell --run 'cd backend && go mod vendor'"
+  - "cp $(nix-build --no-out-link -A $CI_JOB_NAME) $CI_JOB_NAME-$CI_COMMIT_REF_NAME"

@@ -18,11 +18,19 @@ let
     '';
   };
 
-  backend = pkgs.buildGoPackage {
+  backend = pkgs.buildGoModule {
     name = "veilig-bellen-backend";
     src = gitignoreSource [ ] ./backend;
-    goDeps = backend/deps.nix;
-    goPackagePath = "github.com/tweedegolf/veilig-bellen/backend";
+    modSha256 = "";
+    configurePhase = ''
+      runHook preConfigure
+      export GOCACHE=$TMPDIR/go-cache
+      export GOPATH="$TMPDIR/go"
+      export GOSUMDB=off
+      ln -s ${./backend/vendor} vendor
+      cd "$modRoot"
+      runHook postConfigure
+    '';
   };
 
   backend-image = pkgs.dockerTools.buildImage {
