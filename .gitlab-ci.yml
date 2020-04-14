@@ -9,6 +9,8 @@ frontend-public: &standard-build
 
 backend-image:
   <<: *standard-build
+  variables:
+    GOPATH: "/tmp/go"
   script:
   - "nix-shell --run 'cd backend && go mod vendor'"
   - "cp $(nix-build --no-out-link -A $CI_JOB_NAME) $CI_JOB_NAME-$CI_COMMIT_REF_NAME"
