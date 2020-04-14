@@ -7,11 +7,11 @@
     "prepare": "NODE_ENV=production parcel build --no-source-maps -d dist --target browser --bundle-node-modules src/lib.mjs"
   },
   "dependencies": {
-  },
-  "devDependencies": {
     "@privacybydesign/irmajs": "^0.1.9",
     "axios": "^0.19.2",
-    "qrcode-terminal": "^0.12.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
     "parcel": "^1.12.4",
     "sass": "^1.26.2"
   },
