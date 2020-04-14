@@ -43,6 +43,13 @@ func tryNotifyListener(listener chan<- string, status string) {
 	}
 }
 
+// Notify all listeners for the given sessionToken with the status
+func (poll IrmaPoll) tryNotifyListeners(sessionToken string, status string) {
+	for _, statusChannel := range poll.listeners[sessionToken] {
+		tryNotifyListener(statusChannel, status)
+	}
+}
+
 // Polls irma server continuously. Each registered sessionToken is polled once
 // every second.
 // Handles listener creation, destroy, and notification operation
@@ -95,5 +102,5 @@ func pollIrmaSession(transport *irma.HTTPTransport) string {
 // Decides whether we should stop polling based on a returned
 // irma status message
 func shouldStopPolling(status string) bool {
-	return status == "DONE" || status == "TIMEOUT" || status == "CANCELLED" || status == "UNREACHABLE"
+	return status == "CALLED" || status == "TIMEOUT" || status == "CANCELLED" || status == "UNREACHABLE"
 }

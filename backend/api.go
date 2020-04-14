@@ -20,11 +20,14 @@ type Secret = string
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	// Accept any origin
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
 	Phonenumber string   `json:"phonenumber,omitempty"`
+	Dtmf        string   `json:"dtmf,omitempty"`
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
@@ -93,6 +96,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	var session SessionResponse
 	session.SessionPtr = pkg.SessionPtr
 	session.Phonenumber = cfg.phonenumber(dtmf)
+	session.Dtmf = dtmf
 
 	// Update the request server URL to include the session token.
 	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
@@ -162,8 +166,6 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
-	irmaStatus := make(chan string)
-
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("failed to upgrade session status connection:", err)
@@ -172,12 +174,19 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	defer ws.Close()
 
-	sessionToken := r.FormValue("token")
-	if sessionToken == "" {
-		http.Error(w, "No token passed", http.StatusBadRequest)
+	dtmf := r.FormValue("dtmf")
+	if dtmf == "" {
+		http.Error(w, "No dtmf passed", http.StatusBadRequest)
 		return
 	}
 
+	sessionToken, err := cfg.db.secretFromDTMF(dtmf)
+	if err != nil {
+		log.Printf("failed to retrieve secret from dtmf: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
+
+	irmaStatus := make(chan string)
 	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
 
 	for status := range irmaStatus {
@@ -208,6 +217,8 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	} else {
 		io.WriteString(w, secret)
+		cfg.irmaPoll.tryNotifyListeners(secret, "CALLED")
+		log.Printf("someone called %v", secret)
 	}
 }
 
