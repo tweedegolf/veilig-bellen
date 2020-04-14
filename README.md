@@ -56,7 +56,10 @@ To build the public frontend locally:
     nix-build -A frontend-public
 
 This will leave a symlink called `result` which points to the resulting frontend
-library. Similarly, to build the docker container with the backend:
+library.
+
+The build for the backend docker container is similar, but requires a `vendor`
+directory for the backend as created by `go mod vendor`.
 
     nix-build -A backend-image
 
@@ -67,13 +70,6 @@ The resulting docker container can be loaded with:
 Or combine the steps with:
 
     docker load < $(nix-build -A backend-image --no-out-link)
-
-When you make a change to the dependencies of the backend, Go will update
-`go.mod` and `go.sum` but `deps.nix` will need to be updated manually in order
-to lock the dependencies for CI. This is as simple as running `vgo2nix` in the
-`backend` directory. Because `vgo2nix` did not properly handle replacements, I
-had to patch it. Run `nix-shell` in the repository root to get a shell with that
-patched `vgo2nix`.
 
 Nix will cache builds and dependencies so builds are instant when no changes are
 made. If `/nix` becomes too large, it can be cleaned up with
