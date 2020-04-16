@@ -265,7 +265,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.
 func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
-	waitListStatus := make(chan string)
+	waitListStatus := make(Listener)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -278,13 +278,15 @@ func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request)
 	cfg.connectPoll.registerListener(waitListStatus)
 
 	for update := range waitListStatus {
-		msg := []byte(update)
-		err = ws.WriteMessage(websocket.TextMessage, msg)
+		msg, err := json.Marshal(update)
+
 		if err != nil {
-			log.Println("failed to write session status:", err)
+			log.Printf("failed to marshal agent feed update: %#v", update)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
-			break
+			return
 		}
+
+		err = ws.WriteMessage(websocket.TextMessage, msg)
 	}
 	cfg.connectPoll.unregisterListener(waitListStatus, false)
 }
