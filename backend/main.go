@@ -1,28 +1,31 @@
 package main
 
-import "database/sql"
-import "encoding/json"
-import "fmt"
-import "io/ioutil"
-import "log"
-import "net/http"
-import "time"
-import "os"
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"time"
 
-import "github.com/privacybydesign/irmago"
-import flag "github.com/spf13/pflag"
-import _ "github.com/lib/pq"
+	irma "github.com/privacybydesign/irmago"
+
+	"github.com/lib/pq"
+	flag "github.com/spf13/pflag"
+)
 
 // Every backend node will ask the database to expire old sessions once every
 // ExpireDelay
 const ExpireDelay = time.Hour
 
 type ConnectConfiguration struct {
-	id           string                                    `json:"id,omitempty"`
-	secret       string                                    `json:"secret,omitempty"`
-	instanceId   string                                    `json:"instance,omitempty"`
-	queue        string                                    `json:"queue,omitempty"`
-	region       string                                    `json:"region,omitempty"`
+	id         string `json:"id,omitempty"`
+	secret     string `json:"secret,omitempty"`
+	instanceId string `json:"instance,omitempty"`
+	queue      string `json:"queue,omitempty"`
+	region     string `json:"region,omitempty"`
 }
 
 type Configuration struct {
@@ -37,8 +40,7 @@ type Configuration struct {
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	connect             ConnectConfiguration
 	db                  Database
-	irmaPoll            IrmaPoll
-	connectPoll         ConnectPoll
+	broadcaster         Broadcaster
 }
 
 func main() {
@@ -55,7 +57,7 @@ func main() {
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
 
-	connectId := os.Getenv("CONNECT_ID") // Amazon endpoint user identifier
+	connectId := os.Getenv("CONNECT_ID")         // Amazon endpoint user identifier
 	connectSecret := os.Getenv("CONNECT_SECRET") // Amazon endpoint user secret
 
 	connectInstanceId := flag.String("connect-instance-id", "", `Identifier of the Amazon Connect instance`)
@@ -106,18 +108,6 @@ func main() {
 		}
 	}
 
-	if connectId != "" && connectSecret != "" {
-		cfg.connect = ConnectConfiguration{
-			id: connectId,
-			secret: connectSecret,
-			instanceId: *connectInstanceId,
-			queue: *connectQueue,
-			region: *connectRegion,
-		}
-	} else {
-		log.Printf("warning: Amazon Connect credentials not provided")
-	}
-
 	if cfg.PostgresAddress == "" {
 		panic("option required: database")
 	}
@@ -137,14 +127,25 @@ func main() {
 		panic("irma-header-value is required when setting irma-header-key")
 	}
 
+	var identity string
+	hostname, err := os.Hostname()
+	if err != nil {
+		identity = fmt.Sprintf(":%v", os.Getpid())
+	} else {
+		identity = fmt.Sprintf("%v:%v", hostname, os.Getpid())
+	}
+
 	db, err := sql.Open("postgres", cfg.PostgresAddress)
 	if err != nil {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
-	cfg.db = Database{db}
+	listener := pq.NewListener(cfg.PostgresAddress, 100*time.Millisecond, 60*time.Second, nil)
+	cfg.db = Database{
+		db:              db,
+		listener:        listener,
+		backendIdentity: identity,
+	}
 
-	cfg.irmaPoll = makeIrmaPoll()
-	cfg.connectPoll = makeConnectPoll()
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
@@ -152,11 +153,31 @@ func main() {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 
+	// Ping the database to mark this backend as available.
+	err = cfg.db.Keepalive()
+	if err != nil {
+		panic(fmt.Errorf("could not connect to database: %w", err))
+	}
+
+	cfg.broadcaster = makeBroadcaster()
+
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go expireDaemon(cfg)
-	go irmaPollDaemon(cfg)
-	go connectPollDaemon(cfg)
+	go notifyDaemon(cfg)
+
+	if connectId != "" && connectSecret != "" {
+		cfg.connect = ConnectConfiguration{
+			id:         connectId,
+			secret:     connectSecret,
+			instanceId: *connectInstanceId,
+			queue:      *connectQueue,
+			region:     *connectRegion,
+		}
+		go connectPollDaemon(cfg)
+	} else {
+		log.Printf("warning: Amazon Connect credentials not provided")
+	}
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)

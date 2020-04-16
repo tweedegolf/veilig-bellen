@@ -46,8 +46,8 @@ services:
     user: "$USER_ID:$GROUP_ID"
     depends_on: [psql]
     volumes:
-    - "./backend:/go/src/app:cached"
-    - "./bin/:/bin/app/:cached"
+    - "./backend:/go/src/app:ro"
+    - "./bin/:/bin/app/:ro"
     command:
     - "/bin/app/watch.sh"
     - "app"
@@ -66,7 +66,6 @@ services:
     environment:
     - CONNECT_ID
     - CONNECT_SECRET
-    ports: ["127.0.0.1:8080:8080"]
     expose: [8080]
 
   frontend_agents:
