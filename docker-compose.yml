@@ -16,6 +16,7 @@ services:
       - irma
       - backend
       - frontend_agents
+      - frontend_panel
       - frontend_public
     volumes:
       - ".:/app:cached"
@@ -31,6 +32,7 @@ services:
               - backend.veiligbellen.test.tweede.golf
               - irma.veiligbellen.test.tweede.golf
               - agents.veiligbellen.test.tweede.golf
+              - panel.veiligbellen.test.tweede.golf
               - public.veiligbellen.test.tweede.golf
 
   backend:
@@ -76,6 +78,25 @@ services:
     networks:
     - default
     expose: [1234]
+
+  frontend_panel:
+    image: "node:buster-slim"
+    user: "$USER_ID:$GROUP_ID"
+    volumes:
+    - "./frontend-panel:/app:cached"
+    working_dir: "/app"
+    command:
+    - "/usr/local/bin/yarn"
+    - "parcel"
+    - "serve"
+    - "--no-hmr"
+    - "src/index.html"
+    environment:
+    - HOME=/tmp/nodehome
+    networks:
+    - default
+    expose: [1234]
+
 
   frontend_public:
     image: "node:buster-slim"
