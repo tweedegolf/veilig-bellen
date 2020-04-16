@@ -72,7 +72,7 @@ func (db Database) getDisclosed(secret string) (purpose string, disclosed string
 func (db Database) activeSessionCount() (int, error) {
 	// TODO filter out inactive sessions
 	var res string
-	row := db.db.QueryRow("SELECT COUNT * as count FROM sessions")
+	row := db.db.QueryRow("SELECT COUNT(*) AS count FROM sessions")
 	err := row.Scan(&res)
 	if err != nil {
 		return -1, err

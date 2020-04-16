@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"fmt"
 	"time"
 )
 
@@ -37,16 +39,24 @@ func (poll *ConnectPoll) update(update string) {
 // to all listeners.
 func connectPollDaemon(cfg Configuration) {
 	poll := &cfg.connectPoll
-	ticker := time.NewTicker(1000 * time.Millisecond)
+	pollTicker := time.NewTicker(1000 * time.Millisecond)
+	dbTicker := time.NewTicker(1000 * time.Millisecond);
 	defer poll.bc.Close()
 	go poll.bc.daemon()
 
 	var status string
 	for {
 		select {
-		case <-ticker.C:
+		case <-pollTicker.C:
 			status = pollConnect()
 			poll.bc.update(status)
+		case <- dbTicker.C:
+			count, err := cfg.db.activeSessionCount()
+			if err != nil {
+				log.Printf("Could not get active session count: %v", err)
+				break
+			}
+			poll.bc.update(fmt.Sprintf("{\"count\": %v}", count))
 		}
 	}
 }

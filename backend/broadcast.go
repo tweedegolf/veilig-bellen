@@ -32,6 +32,7 @@ func (bc *Broadcast) update(update string) {
 	bc.updates <- update
 }
 
+// Make a new Broadcast object
 func makeBroadcast() Broadcast {
 	listeners := make([]chan string, 0)
 	registerOps := make(chan registerOp)
@@ -77,13 +78,13 @@ func (bc *Broadcast) nextUnitOfWork() bool {
 	case op := <-bc.unregisterOps:
 
 		bc.removeListener(op.listener, op.close)
-	case _ = <-bc.stopped:
+	case <-bc.stopped:
 		return false
 	}
 	return true
 }
 
-// Signal the Broadcast that it shoulds stop waiting for work
+// Signal the Broadcast that it should stop waiting for work
 func (bc *Broadcast) Close() {
 	bc.stopped <- nil
 }
