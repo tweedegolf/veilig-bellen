@@ -67,7 +67,7 @@ func (bc *Broadcast) nextUnitOfWork() bool {
 	case update := <-bc.updates:
 		for _, listener := range bc.listeners {
 			select {
-			case listener <-  update:
+			case listener <- update:
 			default:
 				// Discard message if listener's buffer is full
 			}
@@ -75,7 +75,7 @@ func (bc *Broadcast) nextUnitOfWork() bool {
 	case op := <-bc.registerOps:
 		bc.listeners = append(bc.listeners, op.listener)
 	case op := <-bc.unregisterOps:
-		
+
 		bc.removeListener(op.listener, op.close)
 	case _ = <-bc.stopped:
 		return false
@@ -91,5 +91,6 @@ func (bc *Broadcast) Close() {
 // Continuously run commands from each of the queues whenever they
 // become available.
 func (bc *Broadcast) daemon() {
-	for bc.nextUnitOfWork() {}
+	for bc.nextUnitOfWork() {
+	}
 }

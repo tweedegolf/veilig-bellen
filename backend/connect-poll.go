@@ -1,11 +1,10 @@
 package main
 
 import (
-	
 	"time"
 )
 
-// ConnectPoll polls Amazon connect for waitlist statistics and passes it 
+// ConnectPoll polls Amazon connect for waitlist statistics and passes it
 // to the registered listeners. Uses a Broadcast internally to manage
 // listeners and sending
 type ConnectPoll struct {
@@ -51,7 +50,6 @@ func connectPollDaemon(cfg Configuration) {
 		}
 	}
 }
-
 
 // TODO get status from amazon connect
 func pollConnect() string {
