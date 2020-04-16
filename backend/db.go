@@ -84,5 +84,3 @@ func (db Database) expire() error {
 	_, err := db.db.Exec("DELETE FROM sessions WHERE created < now() - '1 hour'::interval")
 	return err
 }
-
-

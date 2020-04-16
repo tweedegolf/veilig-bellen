@@ -29,7 +29,7 @@ type Configuration struct {
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
 	irmaPoll            IrmaPoll
-	waitlistBroadcast   Broadcast
+	connectPoll   		ConnectPoll
 }
 
 func main() {
@@ -101,7 +101,7 @@ func main() {
 	cfg.db = Database{db}
 
 	cfg.irmaPoll = makeIrmaPoll()
-	cfg.waitlistBroadcast = makeBroadcast()
+	cfg.connectPoll = makeConnectPoll()
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
@@ -112,14 +112,14 @@ func main() {
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go expireDaemon(cfg)
-	go pollDaemon(cfg)
-	go waitlistDaemon(cfg)
+	go irmaPollDaemon(cfg)
+	go connectPollDaemon(cfg)
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
-	externalMux.HandleFunc("/waitlist/feed", cfg.handleWaitlistFeed)
+	externalMux.HandleFunc("/agent-feed", cfg.handleWaitlistFeed)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()
@@ -148,8 +148,4 @@ func expireDaemon(cfg Configuration) {
 		}
 		time.Sleep(ExpireDelay)
 	}
-}
-
-func waitlistDaemon(cfg Configuration) {
-	cfg.waitlistBroadcast.daemon()
 }

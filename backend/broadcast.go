@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 type registerOp struct {
 	listener chan string
 }
@@ -14,29 +16,31 @@ type Broadcast struct {
 	registerOps   chan registerOp
 	unregisterOps chan unregisterOp
 	updates       chan string
+	stopped       chan interface{}
 }
 
-func (bc Broadcast) registerListener(listener chan string) {
+func (bc *Broadcast) registerListener(listener chan string) {
 	bc.registerOps <- registerOp{listener}
 }
 
-func (bc Broadcast) unregisterListener(listener chan string, close bool) {
+func (bc *Broadcast) unregisterListener(listener chan string, close bool) {
 	bc.unregisterOps <- unregisterOp{listener, close}
 }
 
-func (bc Broadcast) update(update string) {
+func (bc *Broadcast) update(update string) {
 	bc.updates <- update
 }
 
 func makeBroadcast() Broadcast {
-	listeners := make([]chan string, 10)
+	listeners := make([]chan string, 0)
 	registerOps := make(chan registerOp)
 	unregisterOps := make(chan unregisterOp)
 	updates := make(chan string, 20)
-	return Broadcast{listeners, registerOps, unregisterOps, updates}
+	stopped := make(chan interface{})
+	return Broadcast{listeners, registerOps, unregisterOps, updates, stopped}
 }
 
-func (bc Broadcast) removeListener(listener chan string, closeChan bool) {
+func (bc *Broadcast) removeListener(listener chan string, closeChan bool) {
 	index := -1
 	for i, l := range bc.listeners {
 		if l == listener {
@@ -53,12 +57,13 @@ func (bc Broadcast) removeListener(listener chan string, closeChan bool) {
 	}
 }
 
-func (bc Broadcast) nextUnitOfWork() {
+func (bc *Broadcast) nextUnitOfWork() bool {
 	select {
 	case update := <-bc.updates:
+		log.Printf("update %v", len(bc.listeners))
 		for _, listener := range bc.listeners {
 			select {
-			case listener <- update:
+			case listener <-  update:
 			default:
 				// Discard message if listener's buffer is full
 			}
@@ -66,12 +71,18 @@ func (bc Broadcast) nextUnitOfWork() {
 	case op := <-bc.registerOps:
 		bc.listeners = append(bc.listeners, op.listener)
 	case op := <-bc.unregisterOps:
+		
 		bc.removeListener(op.listener, op.close)
+	case _ = <-bc.stopped:
+		return false
 	}
+	return true
 }
 
-func (bc Broadcast) daemon() {
-	for {
-		bc.nextUnitOfWork()
-	}
+func (bc *Broadcast) Close() {
+	bc.stopped <- nil
+}
+
+func (bc *Broadcast) daemon() {
+	for bc.nextUnitOfWork() {}
 }

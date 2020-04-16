@@ -272,7 +272,7 @@ func (cfg Configuration) handleWaitlistFeed(w http.ResponseWriter, r *http.Reque
 
 	defer ws.Close()
 
-	cfg.waitlistBroadcast.registerListener(waitListStatus)
+	cfg.connectPoll.registerListener(waitListStatus)
 
 	for update := range waitListStatus {
 		msg := []byte(update)
@@ -283,5 +283,5 @@ func (cfg Configuration) handleWaitlistFeed(w http.ResponseWriter, r *http.Reque
 			break
 		}
 	}
-	cfg.waitlistBroadcast.unregisterListener(waitListStatus, false)
+	cfg.connectPoll.unregisterListener(waitListStatus, false)
 }

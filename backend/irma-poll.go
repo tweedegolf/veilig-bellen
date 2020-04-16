@@ -47,7 +47,7 @@ func tryNotifyListener(listener chan<- string, status string) {
 // every second.
 // Handles listener creation, destroy, and notification operation
 // messages.
-func pollDaemon(cfg Configuration) {
+func irmaPollDaemon(cfg Configuration) {
 	transport := irma.NewHTTPTransport("")
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	poll := &cfg.irmaPoll
