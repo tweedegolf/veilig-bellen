@@ -1,0 +1,17 @@
+frontend-public: &standard-build
+  stage: build
+  script:
+  - "cp $(nix-build --no-out-link -A $CI_JOB_NAME) $CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+  artifacts:
+    paths:
+    - "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 2 weeks
+
+backend-image:
+  <<: *standard-build
+  script:
+  - "export GOPATH=$(mktemp -d)"
+  - "nix-shell --run 'cd backend && go mod vendor'"
+  - "cp $(nix-build --no-out-link -A $CI_JOB_NAME) $CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+  after_script:
+  - "rm -rf $GOPATH"
