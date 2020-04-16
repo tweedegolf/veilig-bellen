@@ -261,7 +261,10 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 	w.Write(responseJSON)
 }
 
-func (cfg Configuration) handleWaitlistFeed(w http.ResponseWriter, r *http.Request) {
+// Status panel waitlist status feed.
+// Upgrade connection to websocket, register a channel with the ConnectPoll,
+// pass updates to websocket.
+func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
 	waitListStatus := make(chan string)
 
 	ws, err := upgrader.Upgrade(w, r, nil)

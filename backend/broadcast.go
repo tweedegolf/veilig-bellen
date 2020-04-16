@@ -1,7 +1,5 @@
 package main
 
-import "log"
-
 type registerOp struct {
 	listener chan string
 }
@@ -19,14 +17,17 @@ type Broadcast struct {
 	stopped       chan interface{}
 }
 
+// Schedule registering a listener
 func (bc *Broadcast) registerListener(listener chan string) {
 	bc.registerOps <- registerOp{listener}
 }
 
+// Schedule unregistering a listener
 func (bc *Broadcast) unregisterListener(listener chan string, close bool) {
 	bc.unregisterOps <- unregisterOp{listener, close}
 }
 
+// Schedule sending a message to all listeners
 func (bc *Broadcast) update(update string) {
 	bc.updates <- update
 }
@@ -40,6 +41,7 @@ func makeBroadcast() Broadcast {
 	return Broadcast{listeners, registerOps, unregisterOps, updates, stopped}
 }
 
+// Finds and remove a listener
 func (bc *Broadcast) removeListener(listener chan string, closeChan bool) {
 	index := -1
 	for i, l := range bc.listeners {
@@ -57,10 +59,12 @@ func (bc *Broadcast) removeListener(listener chan string, closeChan bool) {
 	}
 }
 
+// Runs a command from one of the queues.
+// Blocks if none is available until Broadcast.Close is called.
+// Returns whether this method should be run again in a loop
 func (bc *Broadcast) nextUnitOfWork() bool {
 	select {
 	case update := <-bc.updates:
-		log.Printf("update %v", len(bc.listeners))
 		for _, listener := range bc.listeners {
 			select {
 			case listener <-  update:
@@ -79,10 +83,13 @@ func (bc *Broadcast) nextUnitOfWork() bool {
 	return true
 }
 
+// Signal the Broadcast that it shoulds stop waiting for work
 func (bc *Broadcast) Close() {
 	bc.stopped <- nil
 }
 
+// Continuously run commands from each of the queues whenever they
+// become available.
 func (bc *Broadcast) daemon() {
 	for bc.nextUnitOfWork() {}
 }

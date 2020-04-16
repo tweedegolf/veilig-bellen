@@ -119,7 +119,7 @@ func main() {
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
-	externalMux.HandleFunc("/agent-feed", cfg.handleWaitlistFeed)
+	externalMux.HandleFunc("/agent-feed", cfg.handleAgentFeed)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()
