@@ -1,48 +1,56 @@
 package main
 
+type Message struct {
+	Session string  `json:"session"`
+	Key     string  `json:"key"`
+	Value   string	`json:"value"`
+}
+
+type Listener chan Message
+
 type registerOp struct {
-	listener chan string
+	listener Listener
 }
 
 type unregisterOp struct {
-	listener chan string
+	listener Listener
 	close    bool
 }
 
 type Broadcast struct {
-	listeners     []chan string
+	listeners     []Listener
 	registerOps   chan registerOp
 	unregisterOps chan unregisterOp
-	updates       chan string
+	messages      Listener
 	stopped       chan interface{}
 }
 
 // Schedule registering a listener
-func (bc *Broadcast) registerListener(listener chan string) {
+func (bc *Broadcast) registerListener(listener Listener) {
 	bc.registerOps <- registerOp{listener}
 }
 
 // Schedule unregistering a listener
-func (bc *Broadcast) unregisterListener(listener chan string, close bool) {
+func (bc *Broadcast) unregisterListener(listener Listener, close bool) {
 	bc.unregisterOps <- unregisterOp{listener, close}
 }
 
 // Schedule sending a message to all listeners
-func (bc *Broadcast) update(update string) {
-	bc.updates <- update
+func (bc *Broadcast) notify(message Message) {
+	bc.messages <- message
 }
 
 func makeBroadcast() Broadcast {
-	listeners := make([]chan string, 0)
+	listeners := make([]Listener, 0)
 	registerOps := make(chan registerOp)
 	unregisterOps := make(chan unregisterOp)
-	updates := make(chan string, 20)
+	messages := make(Listener, 20)
 	stopped := make(chan interface{})
-	return Broadcast{listeners, registerOps, unregisterOps, updates, stopped}
+	return Broadcast{listeners, registerOps, unregisterOps, messages, stopped}
 }
 
 // Finds and remove a listener
-func (bc *Broadcast) removeListener(listener chan string, closeChan bool) {
+func (bc *Broadcast) removeListener(listener Listener, closeChan bool) {
 	index := -1
 	for i, l := range bc.listeners {
 		if l == listener {
@@ -64,10 +72,10 @@ func (bc *Broadcast) removeListener(listener chan string, closeChan bool) {
 // Returns whether this method should be run again in a loop
 func (bc *Broadcast) nextUnitOfWork() bool {
 	select {
-	case update := <-bc.updates:
+	case message := <-bc.messages:
 		for _, listener := range bc.listeners {
 			select {
-			case listener <- update:
+			case listener <- message:
 			default:
 				// Discard message if listener's buffer is full
 			}

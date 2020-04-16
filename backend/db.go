@@ -5,7 +5,6 @@ import "database/sql"
 import "fmt"
 import "math/big"
 import "time"
-import "strconv"
 
 import "github.com/lib/pq"
 
@@ -71,13 +70,13 @@ func (db Database) getDisclosed(secret string) (purpose string, disclosed string
 
 func (db Database) activeSessionCount() (int, error) {
 	// TODO filter out inactive sessions
-	var res string
+	var res int
 	row := db.db.QueryRow("SELECT COUNT * as count FROM sessions")
 	err := row.Scan(&res)
 	if err != nil {
 		return -1, err
 	}
-	return strconv.Atoi(res)
+	return res, nil
 }
 
 func (db Database) expire() error {

@@ -18,18 +18,18 @@ func makeConnectPoll() ConnectPoll {
 }
 
 // Schedule registering a listener
-func (poll *ConnectPoll) registerListener(listener chan string) {
+func (poll *ConnectPoll) registerListener(listener Listener) {
 	poll.bc.registerListener(listener)
 }
 
 // Schedule unregistering a listener
-func (poll *ConnectPoll) unregisterListener(listener chan string, close bool) {
+func (poll *ConnectPoll) unregisterListener(listener Listener, close bool) {
 	poll.bc.unregisterListener(listener, close)
 }
 
 // Schedule sending a message to all listeners
-func (poll *ConnectPoll) update(update string) {
-	poll.bc.update(update)
+func (poll *ConnectPoll) notify(message Message) {
+	poll.bc.notify(message)
 }
 
 // Connect poll daemon. To be run in a separate thread.
@@ -46,7 +46,7 @@ func connectPollDaemon(cfg Configuration) {
 		select {
 		case <-ticker.C:
 			status = pollConnect()
-			poll.bc.update(status)
+			poll.notify(Message{"kcc", "amazon-connect", status})
 		}
 	}
 }
