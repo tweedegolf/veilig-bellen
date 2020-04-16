@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 )
@@ -56,8 +55,7 @@ func connectPollDaemon(cfg Configuration) {
 				log.Printf("Could not get active session count: %v", err)
 				break
 			}
-			value := fmt.Sprintf("{\"count\": %v}", count)
-			poll.notify(Message{"kcc", "active-sessions", value})
+			poll.notify(Message{"kcc", "active-sessions", ActiveSessionsMessage{count}})
 		}
 	}
 }
@@ -65,4 +63,8 @@ func connectPollDaemon(cfg Configuration) {
 // TODO get status from amazon connect
 func pollConnect() string {
 	return "{\"DataSnapshotTime\":\"2020-04-15T20:49:11Z\",\"MetricResults\":[{\"Collections\":[{\"Metric\":{\"Name\":\"AGENTS_ONLINE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_AVAILABLE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_ON_CALL\",\"Unit\":\"COUNT\"},\"Value\":0},{\"Metric\":{\"Name\":\"CONTACTS_IN_QUEUE\",\"Unit\":\"COUNT\"},\"Value\":0}],\"Dimensions\":null}],\"NextToken\":null}"
+}
+
+type ActiveSessionsMessage struct {
+	Count int `json:"count"`
 }

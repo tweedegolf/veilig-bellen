@@ -1,9 +1,9 @@
 package main
 
 type Message struct {
-	Session string  `json:"session"`
-	Key     string  `json:"key"`
-	Value   string	`json:"value"`
+	Session string  	`json:"session"`
+	Key     string  	`json:"key"`
+	Value   interface{}	`json:"value"`
 }
 
 type Listener chan Message
