@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"time"
+	"encoding/json"
 )
 
 // ConnectPoll polls Amazon connect for waitlist statistics and passes it
@@ -43,8 +44,9 @@ func connectPollDaemon(cfg Configuration) {
 	defer poll.bc.Close()
 	go poll.bc.daemon()
 
-	var status string
+	var status ConnectStatusMessage
 	for {
+		
 		select {
 		case <-pollTicker.C:
 			status = pollConnect()
@@ -61,8 +63,33 @@ func connectPollDaemon(cfg Configuration) {
 }
 
 // TODO get status from amazon connect
-func pollConnect() string {
-	return "{\"DataSnapshotTime\":\"2020-04-15T20:49:11Z\",\"MetricResults\":[{\"Collections\":[{\"Metric\":{\"Name\":\"AGENTS_ONLINE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_AVAILABLE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_ON_CALL\",\"Unit\":\"COUNT\"},\"Value\":0},{\"Metric\":{\"Name\":\"CONTACTS_IN_QUEUE\",\"Unit\":\"COUNT\"},\"Value\":0}],\"Dimensions\":null}],\"NextToken\":null}"
+func pollConnect() ConnectStatusMessage {
+	status := "{\"DataSnapshotTime\":\"2020-04-15T20:49:11Z\",\"MetricResults\":[{\"Collections\":[{\"Metric\":{\"Name\":\"AGENTS_ONLINE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_AVAILABLE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_ON_CALL\",\"Unit\":\"COUNT\"},\"Value\":0},{\"Metric\":{\"Name\":\"CONTACTS_IN_QUEUE\",\"Unit\":\"COUNT\"},\"Value\":0}],\"Dimensions\":null}],\"NextToken\":null}"
+	var message ConnectStatusMessage
+	err := json.Unmarshal([]byte(status), &message)
+	if err != nil {
+		log.Printf("Could not encode connect status message %#v", err);
+	}
+	return message
+}
+
+type Metric struct {
+	Name string
+	Unit string
+}
+
+type MetricCollection struct {
+	Metric Metric
+	Value interface{}
+}
+
+type MetricResult struct {
+	Collections []MetricCollection
+}
+
+type ConnectStatusMessage struct {
+	DataSnapshotTime string
+	MetricResults []MetricResult
 }
 
 type ActiveSessionsMessage struct {

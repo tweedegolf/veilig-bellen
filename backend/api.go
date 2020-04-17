@@ -18,8 +18,9 @@ type DTMF = string
 type Secret = string
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 type SessionResponse struct {
@@ -274,19 +275,25 @@ func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request)
 	}
 
 	defer ws.Close()
-
+	defer cfg.connectPoll.unregisterListener(waitListStatus, false)
 	cfg.connectPoll.registerListener(waitListStatus)
 
 	for update := range waitListStatus {
 		msg, err := json.Marshal(update)
 
 		if err != nil {
-			log.Printf("failed to marshal agent feed update: %#v", update)
+			log.Printf("failed to marshal agent feed update: %#v", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 
 		err = ws.WriteMessage(websocket.TextMessage, msg)
+
+		if err != nil {
+			log.Printf("failed to write into websocket: %#v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
-	cfg.connectPoll.unregisterListener(waitListStatus, false)
-}
+	
+} 

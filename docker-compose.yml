@@ -93,6 +93,7 @@ services:
     - "src/index.html"
     environment:
     - HOME=/tmp/nodehome
+    - BACKEND_HOSTNAME=backend.veiligbellen.test.tweede.golf
     networks:
     - default
     expose: [1234]

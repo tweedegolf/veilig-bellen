@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 type Message struct {
 	Session string  	`json:"session"`
 	Key     string  	`json:"key"`
@@ -78,13 +80,13 @@ func (bc *Broadcast) nextUnitOfWork() bool {
 			select {
 			case listener <- message:
 			default:
+				log.Printf("Broadcast dropped message")
 				// Discard message if listener's buffer is full
 			}
 		}
 	case op := <-bc.registerOps:
 		bc.listeners = append(bc.listeners, op.listener)
 	case op := <-bc.unregisterOps:
-
 		bc.removeListener(op.listener, op.close)
 	case <-bc.stopped:
 		return false
