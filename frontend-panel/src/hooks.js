@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { ApiContext } from './contexts.mjs';
 
 export const useApi = () => useContext(ApiContext)
@@ -12,23 +12,22 @@ export const useFeed = ({
     onMessage,
 }) => {
     const api = useApi();
-    useEffect(() => {
-         
-        const handleMessage = (e) => {
-            const data = e.data && JSON.parse(e.data)
-            switch (data.key) {
-                case 'amazon-connect':
-                    onConnectStatus && onConnectStatus(data.value);
-                    break;
-                case 'active-sessions':
-                    onSessionCount && onSessionCount(data.value);
-                    break;
-                default:
-                    onMessage && onMessage(e)
-            }
+
+    const handleMessage = (e) => {
+        const data = e.data && JSON.parse(e.data)
+        switch (data.key) {
+            case 'amazon-connect':
+                onConnectStatus && onConnectStatus(data.value);
+                break;
+            case 'active-sessions':
+                onSessionCount && onSessionCount(data.value);
+                break;
+            default:
+                onMessage && onMessage(e)
         }
-
-        api.connectFeed({ onMessage: handleMessage, onConnect, onDisconnect, onError })
-
+    }
+    const connect = () => api.registerFeedListener({ onMessage: handleMessage, onConnect, onDisconnect, onError });
+    useEffect(() => {
+         connect();
     }, []);
 };

@@ -1,18 +1,43 @@
 
 
-const connectFeed = (backendHostname) => async ({ onConnect, onMessage, onDisconnect, onError }) => {
-    const websocket = new WebSocket(`wss://${backendHostname}/agent-feed`);
+const registerFeedListener = (feedListeners) => ({ onConnect, onMessage, onDisconnect, onError }) => {
+    feedListeners.push({ onConnect, onMessage, onDisconnect, onError });
+}
 
-    websocket.onopen = (e) => onConnect && onConnect(e);
-    websocket.onmessage = (e) => onMessage && onMessage(e);
-    websocket.onclose = (e) => onDisconnect && onDisconnect(e);
-    websocket.onerror = (e) => onError && onError(e);
+const removeFeedListener = (feedListeners) => (l) => feedListeners.remove(l)
+
+const initFeed = (backendHostname, feedListeners) => {
+    let reconnectInterval = null
+    const connect = () => {
+        console.log('Connecting to status feed...');
+        const websocket = new WebSocket(`wss://${backendHostname}/agent-feed`);
+
+        websocket.onopen = (e) => {
+            reconnectInterval && (reconnectInterval = clearInterval(reconnectInterval))
+            feedListeners.forEach(({ onConnect }) => onConnect && onConnect(e));
+        }
+
+        websocket.onmessage = (e) => feedListeners.forEach(({ onMessage }) => onMessage && onMessage(e));
+        websocket.onclose = (e) => {
+            console.log('Disconnected from status feed, tring to reconnect...')
+            reconnectInterval || (reconnectInterval = setInterval(connect, 1000));
+            feedListeners.forEach(({ onDisconnect }) => onDisconnect && onDisconnect(e));
+        };
+        websocket.onerror = (e) => feedListeners.forEach(({ onError }) => onError && onError(e))
+    }
+
+    connect()
+
 }
 
 export const initApi = () => {
     const backendHostname = process.env.BACKEND_HOSTNAME;
+    const feedListeners = [];
+
+    initFeed(backendHostname, feedListeners);
 
     return {
-        connectFeed: connectFeed(backendHostname)
+        registerFeedListener: registerFeedListener(feedListeners),
+        removeFeedListener: removeFeedListener(feedListeners),
     }
 }

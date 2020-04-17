@@ -20,6 +20,7 @@ type Secret = string
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
+	// TODO: check origin header
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
@@ -261,7 +262,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 
 	w.Write(responseJSON)
 }
-
+ 
 // Status panel waitlist status feed.
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.

@@ -12,14 +12,15 @@ const Panel = () => {
 
     useFeed({
         onConnect: () => setState(s => ({ ...s, connected: true })),
-        onMessage: e => console.log(e),
+        onMessage: e => console.log('Unrecognized message', e),
         onDisconnect: () => setState(s => ({ ...s, connected: false })),
         onSessionCount: d => setState(s => ({...s, sessionCount: d.count})),
         onConnectStatus: status => setState(s => ({...s, connectStatus: status})),
+        onError: e => setState(s => ({...s, error: e}))
     });
 
     if (!state.connected) {
-        return (<p>Connecting... {JSON.stringify(state)}</p>)
+        return (<p>Connecting... {JSON.stringify(state)}</p>)   
     }
 
     return (<p>Panel {JSON.stringify(state)}</p>)
