@@ -17,14 +17,19 @@ const initFeed = (backendHostname, feedListeners) => {
 
         websocket.onopen = (e) => {
             console.log('Connected to status feed')
-            reconnectInterval && clearInterval(reconnectInterval) && (reconnectInterval = null);
+            if(reconnectInterval !== null) {
+                clearInterval(reconnectInterval);
+                reconnectInterval = null;
+            }
             feedListeners.forEach(({ onConnect }) => onConnect && onConnect(e));
         }
 
         websocket.onmessage = (e) => feedListeners.forEach(({ onMessage }) => onMessage && onMessage(e));
         websocket.onclose = (e) => {
+            if(reconnectInterval === null) {
+                reconnectInterval = setInterval(connect, 1000);
+            }
             console.log('Disconnected from status feed, tring to reconnect...')
-            reconnectInterval || (reconnectInterval = setInterval(connect, 1000));
             feedListeners.forEach(({ onDisconnect }) => onDisconnect && onDisconnect(e));
         };
         websocket.onerror = (e) => feedListeners.forEach(({ onError }) => onError && onError(e))

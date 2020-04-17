@@ -58,7 +58,7 @@ const Panel = () => {
             </tr>
         </>);
 
-        // Render panel
+    // Render panel
     return (
         <div className="status-panel">
             <h1>Status panel</h1>

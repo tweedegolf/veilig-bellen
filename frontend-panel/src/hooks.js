@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { ApiContext } from './contexts.mjs';
+import { ApiContext } from './contexts.js';
 
 // Get the currently initialized api handle
 export const useApi = () => useContext(ApiContext)
@@ -29,11 +29,11 @@ export const useFeed = ({
                 onSessionCount && onSessionCount(data.value);
                 break;
             default:
+                // unregocnized message, pass the event on
                 onMessage && onMessage(e)
         }
     }
-    const connect = () => api.registerFeedListener({ onMessage: handleMessage, onConnect, onDisconnect, onError });
     useEffect(() => {
-         connect();
+        api.registerFeedListener({ onMessage: handleMessage, onConnect, onDisconnect, onError });
     }, []);
 };
