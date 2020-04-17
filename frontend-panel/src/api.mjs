@@ -1,11 +1,14 @@
 
-
+// Regeister a new status feed listener
 const registerFeedListener = (feedListeners) => ({ onConnect, onMessage, onDisconnect, onError }) => {
     feedListeners.push({ onConnect, onMessage, onDisconnect, onError });
 }
 
+// Remove a status feed listener
 const removeFeedListener = (feedListeners) => (l) => feedListeners.remove(l)
 
+// Initialize a automatically-reconnecting websocket connection
+// to the agent status feed
 const initFeed = (backendHostname, feedListeners) => {
     let reconnectInterval = null
     const connect = () => {
@@ -31,6 +34,7 @@ const initFeed = (backendHostname, feedListeners) => {
 
 }
 
+// Initialize the Api connections, setting up the feed connection.
 export const initApi = () => {
     const backendHostname = process.env.BACKEND_HOSTNAME;
     const feedListeners = [];

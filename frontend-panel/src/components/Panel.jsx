@@ -1,29 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useApi, useFeed } from "../hooks";
-
-const handleConnectStatus = (setConnectStatus) => (status) => {
-
-    const update = {};
-    update.lastUpdate = new Date(status.DataSnapshotTime);
-    status.MetricResults.forEach(r => r.Collections.forEach(({ Metric: { Name: n }, Value: v }) => {
-        switch (n) {
-            case 'AGENTS_ONLINE':
-                update.agentsOnline = v
-                break;
-            case 'AGENTS_AVAILABLE':
-                update.agentsAvailable = v;
-                break;
-            case 'AGENTS_ON_CALL':
-                update.agentsOnCall = v;
-                break;
-            case 'CONTACTS_IN_QUEUE':
-                update.contactsInQueue = v;
-                break;
-        }
-    }));
-
-    setConnectStatus(update);
-}
+import { useApi, useFeed } from '../hooks';
+import {handleConnectStatus} from '../util'
 
 const Panel = () => {
     const [state, setState] = useState({
@@ -40,6 +17,8 @@ const Panel = () => {
         error: null,
     });
 
+    // Set up feed listeners, which update the state whenever 
+    // a new status update is received
     useFeed({
         onConnect: () => setState(s => ({ ...s, connected: true, error: false })),
         onMessage: e => console.log('Unrecognized message', e),
@@ -50,9 +29,11 @@ const Panel = () => {
     });
 
     if (!state.connected) {
+        // Render disconnection message
         return (<p>Connecting...</p>)
     }
 
+    // Render Amazon connect status updates
     const ConnectStatus = ({ s }) => (
         <>
             <tr>
@@ -77,6 +58,7 @@ const Panel = () => {
             </tr>
         </>);
 
+        // Render panel
     return (
         <div className="status-panel">
             <h1>Status panel</h1>

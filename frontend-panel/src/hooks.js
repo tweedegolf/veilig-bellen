@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ApiContext } from './contexts.mjs';
 
+// Get the currently initialized api handle
 export const useApi = () => useContext(ApiContext)
 
+// Register a new status feed listener
 export const useFeed = ({
     onConnect,
     onDisconnect,
@@ -14,7 +16,11 @@ export const useFeed = ({
     const api = useApi();
 
     const handleMessage = (e) => {
-        const data = e.data && JSON.parse(e.data)
+        const data = e.data && JSON.parse(e.data);
+        if (!data) {
+            // Data could not be parsed
+            return;
+        }
         switch (data.key) {
             case 'amazon-connect':
                 onConnectStatus && onConnectStatus(data.value);
