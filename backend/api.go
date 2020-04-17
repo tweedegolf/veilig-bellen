@@ -291,9 +291,7 @@ func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request)
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 
 		if err != nil {
-			log.Printf("failed to write into websocket: %#v", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
-			return
+			break
 		}
 	}
 
