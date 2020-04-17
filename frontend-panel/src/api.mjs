@@ -13,7 +13,8 @@ const initFeed = (backendHostname, feedListeners) => {
         const websocket = new WebSocket(`wss://${backendHostname}/agent-feed`);
 
         websocket.onopen = (e) => {
-            reconnectInterval && (reconnectInterval = clearInterval(reconnectInterval))
+            console.log('Connected to status feed')
+            reconnectInterval && clearInterval(reconnectInterval) && (reconnectInterval = null);
             feedListeners.forEach(({ onConnect }) => onConnect && onConnect(e));
         }
 

@@ -262,7 +262,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 
 	w.Write(responseJSON)
 }
- 
+
 // Status panel waitlist status feed.
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.
@@ -296,5 +296,5 @@ func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-	
-} 
+
+}
