@@ -1,12 +1,14 @@
 package main
 
-import "crypto/rand"
-import "database/sql"
-import "fmt"
-import "math/big"
-import "time"
+import (
+	"crypto/rand"
+	"database/sql"
+	"fmt"
+	"math/big"
+	"time"
 
-import "github.com/lib/pq"
+	"github.com/lib/pq"
+)
 
 var ErrNoRows = sql.ErrNoRows
 
@@ -68,11 +70,19 @@ func (db Database) getDisclosed(secret string) (purpose string, disclosed string
 	return purpose, disclosed, err
 }
 
-func (db Database) activeSessionCount() (int, error) {
-	// TODO filter out inactive sessions
+func (db Database) updateSessionStatus(secret string, status string) error {
+	_, err := db.db.Exec("UPDATE sessions SET status = $1 WHERE secret = $2", status, secret)
+	return err
+}
 
+func (db Database) activeSessionCount() (int, error) {
 	var res int
-	row := db.db.QueryRow("SELECT COUNT(*) AS count FROM sessions")
+	row := db.db.QueryRow(`
+		SELECT COUNT(*) AS count 
+		FROM sessions 
+		WHERE status NOT IN ('UNREACHABLE', 'TIMEOUT', 'DONE', 'CANCELLED') 
+		AND status IS NOT NULL
+	`)
 	err := row.Scan(&res)
 	if err != nil {
 		return -1, err

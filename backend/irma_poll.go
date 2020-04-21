@@ -61,6 +61,11 @@ func irmaPollDaemon(cfg Configuration) {
 				// Update the request server URL to include the session token.
 				transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
 				status = pollIrmaSession(transport)
+				err := cfg.db.updateSessionStatus(sessionToken, status)
+				if err != nil {
+					log.Printf("IrmaPoll failed to update session status: %#v", err);
+				}
+
 				// Notify all channels
 				for _, irmaStatus := range statusChannels {
 					tryNotifyListener(irmaStatus, status)
