@@ -24,7 +24,7 @@ type Broadcast struct {
 	registerOps   chan registerOp
 	unregisterOps chan unregisterOp
 	messages      Listener
-	stopped       chan interface{}
+	stopped       chan struct{}
 }
 
 // Schedule registering a listener
@@ -48,7 +48,7 @@ func makeBroadcast() Broadcast {
 	registerOps := make(chan registerOp)
 	unregisterOps := make(chan unregisterOp)
 	messages := make(Listener, 20)
-	stopped := make(chan interface{})
+	stopped := make(chan struct{})
 	return Broadcast{listeners, registerOps, unregisterOps, messages, stopped}
 }
 
@@ -96,7 +96,7 @@ func (bc *Broadcast) nextUnitOfWork() bool {
 
 // Signal the Broadcast that it should stop waiting for work
 func (bc *Broadcast) Close() {
-	bc.stopped <- nil
+	bc.stopped <- struct{}{}
 }
 
 // Continuously run commands from each of the queues whenever they
