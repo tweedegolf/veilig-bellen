@@ -187,7 +187,6 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println("failed to write session status:", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
 			break
 		}
 	}
@@ -284,7 +283,6 @@ func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request)
 
 		if err != nil {
 			log.Printf("failed to marshal agent feed update: %#v", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 
