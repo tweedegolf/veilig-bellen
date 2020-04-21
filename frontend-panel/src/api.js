@@ -10,14 +10,22 @@ const removeFeedListener = (feedListeners) => (l) => feedListeners.remove(l)
 // Initialize a automatically-reconnecting websocket connection
 // to the agent status feed
 const initFeed = (backendHostname, feedListeners) => {
-    let reconnectInterval = null
+    let reconnectInterval = null;
+    let websocket = null;
     const connect = () => {
+        // Cancel pending connection
+        if (websocket !== null) {
+            websocket.onclose = () => console.log('Canceled connection attempt');
+            websocket.close();
+        }
+        // Try to reconnect
         console.log('Connecting to status feed...');
-        const websocket = new WebSocket(`wss://${backendHostname}/agent-feed`);
+        websocket = new WebSocket(`wss://${backendHostname}/agent-feed`);
 
         websocket.onopen = (e) => {
             console.log('Connected to status feed')
-            if(reconnectInterval !== null) {
+            // Cancel reconnection interval
+            if (reconnectInterval !== null) {
                 clearInterval(reconnectInterval);
                 reconnectInterval = null;
             }
@@ -26,7 +34,8 @@ const initFeed = (backendHostname, feedListeners) => {
 
         websocket.onmessage = (e) => feedListeners.forEach(({ onMessage }) => onMessage && onMessage(e));
         websocket.onclose = (e) => {
-            if(reconnectInterval === null) {
+            // Set a reconnection interval
+            if (reconnectInterval === null) {
                 reconnectInterval = setInterval(connect, 1000);
             }
             console.log('Disconnected from status feed, tring to reconnect...')
