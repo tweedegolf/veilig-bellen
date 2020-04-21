@@ -1,7 +1,6 @@
 import React from 'react';
 import ApiProvider from './ApiProvider';
-import Panel from './Panel';
-import { useApi } from '../hooks';
+import Panel from './panel/Panel';
 
 const App = () => (
     <ApiProvider>

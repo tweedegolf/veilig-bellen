@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ApiContext } from '../contexts.js';
-import {initApi} from '../api.js'
+import { initApi } from '../api.js'
 
-const ApiProvider = ({children}) => {
+const ApiProvider = ({ children }) => {
     const [api, setApi] = useState();
 
     useEffect(() => {
         setApi(initApi())
     }, [])
 
-    if(!api) {
+    if (!api) {
         return <div>Loading...</div>
     }
 
