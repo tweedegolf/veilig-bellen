@@ -19,13 +19,12 @@ type NotifyOp struct {
 	status       string
 }
 
-// TODO clear after a while
 type Session struct {
 	channels []chan<- string
 	status   string
+	created  time.Time
 }
 
-// IrmaPoll Irma polling facade type
 type IrmaPoll struct {
 	sessions  map[string]*Session
 	createOps chan CreateOp
@@ -78,6 +77,7 @@ func (poll *IrmaPoll) findOrCreate(sessionToken string) *Session {
 		poll.sessions[sessionToken] = &Session{
 			channels: make([]chan<- string, 10),
 			status:   "INIT",
+			created:  time.Now(),
 		}
 	}
 	return poll.sessions[sessionToken]
@@ -106,11 +106,14 @@ func pollDaemon(cfg Configuration) {
 					session.tryNotify(status)
 				}
 
-				// Close and delete all listeners for this channel
-				// for _, channel := range session.channels {
-				// close(channel)
-				// }
-				// delete(poll.listeners, sessionToken)
+				// Clean up all sessions after 2 hours regardless.
+				if time.Since(session.created).Hours() > 2 {
+					// Close and delete all listeners for this session.
+					for _, channel := range session.channels {
+						close(channel)
+					}
+					delete(poll.sessions, sessionToken)
+				}
 			}
 		case op := <-poll.createOps:
 			poll.findOrCreate(op.sessionToken).addChannel(op.listener)
