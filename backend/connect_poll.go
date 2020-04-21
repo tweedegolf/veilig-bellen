@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"time"
-	"encoding/json"
 )
 
 // ConnectPoll polls Amazon connect for waitlist statistics and passes it
@@ -46,7 +46,7 @@ func connectPollDaemon(cfg Configuration) {
 
 	var status ConnectStatusResponse
 	for {
-		
+
 		select {
 		case <-pollTicker.C:
 			status = pollConnect()
@@ -68,19 +68,19 @@ func pollConnect() ConnectStatusResponse {
 	var message ConnectStatusResponse
 	err := json.Unmarshal([]byte(status), &message)
 	if err != nil {
-		log.Printf("Could not encode connect status message %#v", err);
+		log.Printf("Could not encode connect status message %#v", err)
 	}
 	return message
 }
 
 type Metric struct {
-	Name 			string
-	Unit 			string
+	Name string
+	Unit string
 }
 
 type MetricCollection struct {
-	Metric 	Metric
-	Value 	interface{}
+	Metric Metric
+	Value  interface{}
 }
 
 type MetricResult struct {
@@ -88,10 +88,10 @@ type MetricResult struct {
 }
 
 type ConnectStatusResponse struct {
-	DataSnapshotTime 	string
-	MetricResults 		[]MetricResult
+	DataSnapshotTime string
+	MetricResults    []MetricResult
 }
 
 type ActiveSessionsMessage struct {
-	Count	int `json:"count"`
+	Count int `json:"count"`
 }

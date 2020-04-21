@@ -7,7 +7,6 @@ import "math/big"
 import "time"
 import "github.com/lib/pq"
 
-
 var ErrNoRows = sql.ErrNoRows
 
 type Database struct {
