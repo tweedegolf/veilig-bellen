@@ -49,7 +49,6 @@ func (poll IrmaPoll) createIrmaListener(sessionToken string, irmaStatus chan<- s
 // the status update is discarded. This way, sending status messages
 // never blocks the pollDaemon if the listener is never received from.
 func (session *Session) tryNotify(status string) {
-	log.Printf("notify %v", status)
 	session.status = status
 	for _, channel := range session.channels {
 		select {
@@ -83,6 +82,7 @@ func (poll *IrmaPoll) findOrCreate(sessionToken string) *Session {
 	}
 	return poll.sessions[sessionToken]
 }
+
 
 // Polls irma server continuously. Each registered sessionToken is polled once
 // every second.

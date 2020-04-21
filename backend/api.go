@@ -271,3 +271,23 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 
 	w.Write(responseJSON)
 }
+
+func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	response, err := cfg.getConnectCurrentMetrics()
+
+	if err != nil {
+		log.Printf("failed to fetch metrics: %#v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	responseJSON, err := json.Marshal(response)
+
+	if err != nil {
+		log.Printf("failed to marshal disclose response: %#v", response)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseJSON)
+}

@@ -7,6 +7,7 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
+import "os"
 
 import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
@@ -15,6 +16,14 @@ import _ "github.com/lib/pq"
 // Every backend node will ask the database to expire old sessions once every
 // ExpireDelay
 const ExpireDelay = time.Hour
+
+type ConnectConfiguration struct {
+	id           string                                    `json:"id,omitempty"`
+	secret       string                                    `json:"secret,omitempty"`
+	instanceId   string                                    `json:"instance,omitempty"`
+	queue        string                                    `json:"queue,omitempty"`
+	region       string                                    `json:"region,omitempty"`
+}
 
 type Configuration struct {
 	PostgresAddress     string                             `json:"database,omitempty"`
@@ -25,6 +34,7 @@ type Configuration struct {
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
 	irmaPoll            IrmaPoll
+	connect             ConnectConfiguration
 }
 
 func main() {
@@ -37,6 +47,13 @@ func main() {
 	irmaServer := flag.String("irma-server", "", `The address of the IRMA server to use for disclosure.`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
+
+	connectId := os.Getenv("CONNECT_ID") // Amazon endpoint user identifier
+	connectSecret := os.Getenv("CONNECT_SECRET") // Amazon endpoint user secret
+
+	connectInstanceId := flag.String("connect-instance-id", "", `Identifier of the Amazon Connect instance`)
+	connectQueue := flag.String("connect-queue", "", `Identifier of the Amazon Connect queue to show the metrics for`)
+	connectRegion := flag.String("connect-region", "", `The Amazon Connect region to use (i.e. eu-central-1)`)
 
 	flag.Parse()
 
@@ -71,6 +88,18 @@ func main() {
 		if err != nil {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
+	}
+
+	if connectId != "" && connectSecret != "" {
+		cfg.connect = ConnectConfiguration{
+			id: connectId,
+			secret: connectSecret,
+			instanceId: *connectInstanceId,
+			queue: *connectQueue,
+			region: *connectRegion,
+		}
+	} else {
+		log.Printf("warning: Amazon Connect credentials not provided")
 	}
 
 	if cfg.PostgresAddress == "" {
@@ -112,6 +141,7 @@ func main() {
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
+	externalMux.HandleFunc("/metrics", cfg.handleMetrics)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()

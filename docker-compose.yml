@@ -54,8 +54,14 @@ services:
     - "--irma-server=http://irma:8088"
     - "--phone-number=+318000227348"
     - '--purpose-map={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}'
+    - "--connect-instance-id=503d5d31-de38-4803-bb39-02e98ee8891c"
+    - "--connect-queue=f3860ab3-8305-4862-940e-9f6b608f9530"
+    - "--connect-region=eu-central-1"
     networks:
-      - default
+    - default
+    environment:
+    - CONNECT_ID
+    - CONNECT_SECRET
     ports: ["127.0.0.1:8080:8080"]
     expose: [8080]
 

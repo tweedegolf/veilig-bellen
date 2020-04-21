@@ -25,6 +25,9 @@ docker exec -i veilig-bellen_psql_1 psql -U tg -d tg < database/schema.sql
 bin/up.sh
 ```
 
+**Note:** in order to run with the metrics API enabled you need to create an Amazon IAM user, add the appropriate Amazon Connect roles,
+and set `CONNECT_ID` and `CONNECT_SECRET` environment variables before starting the backend.
+
 ### Manual flow
 
 1. Go to `localhost:8080/session?purpose=foo`
