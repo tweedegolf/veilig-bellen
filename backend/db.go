@@ -1,14 +1,12 @@
 package main
 
-import (
-	"crypto/rand"
-	"database/sql"
-	"fmt"
-	"math/big"
-	"time"
+import "crypto/rand"
+import "database/sql"
+import "fmt"
+import "math/big"
+import "time"
+import "github.com/lib/pq"
 
-	"github.com/lib/pq"
-)
 
 var ErrNoRows = sql.ErrNoRows
 

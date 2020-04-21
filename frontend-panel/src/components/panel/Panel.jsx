@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useFeed } from '../../hooks';
 import { handleConnectStatus } from '../../util';
 import { Box, Container, Typography, Grid } from '@material-ui/core';
-import ConnectStatus from './ConnectStatus';
 import PanelItem from './PanelItem';
 
 const Panel = () => {
@@ -45,7 +44,12 @@ const Panel = () => {
                 </Typography>
                 <Grid container spacing={3}>
                     <PanelItem title="Active Irma sessions" value={state.sessionCount} />
-                    {state.connectStatus && <ConnectStatus status={state.connectStatus} />}
+                    {state.connectStatus && (<>
+                        <PanelItem title="Agents online" value={state.connectStatus.agentsOnline} />
+                        <PanelItem title="Agents available" value={state.connectStatus.agentsAvailable} />
+                        <PanelItem title="Agents on call" value={state.connectStatus.agentsOnCall} />
+                        <PanelItem title="Contacts in queue" value={state.connectStatus.contactsInQueue} /></>
+                    )}
                 </Grid>
             </Box>
         </Container>
