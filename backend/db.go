@@ -29,7 +29,7 @@ func (db Database) NewSession(purpose string) (DTMF, error) {
 			return "", err
 		}
 
-		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, DEFAULT, DEFAULT)", dtmf, purpose)
+		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, DEFAULT, DEFAULT, DEFAULT)", dtmf, purpose)
 		pqErr, ok := err.(*pq.Error)
 		if ok && pqErr.Code.Name() == "unique_violation" {
 			time.Sleep(100 * time.Millisecond)
@@ -69,7 +69,7 @@ func (db Database) getDisclosed(secret string) (purpose string, disclosed string
 }
 
 func (db Database) updateSessionStatus(secret string, status string) error {
-	_, err := db.db.Exec("UPDATE sessions SET status = $1 WHERE secret = $2", status, secret)
+	_, err := db.db.Exec("UPDATE sessions SET irma_status = $1 WHERE secret = $2", status, secret)
 	return err
 }
 
@@ -78,8 +78,8 @@ func (db Database) activeSessionCount() (int, error) {
 	row := db.db.QueryRow(`
 		SELECT COUNT(*) AS count 
 		FROM sessions 
-		WHERE status NOT IN ('UNREACHABLE', 'TIMEOUT', 'DONE', 'CANCELLED') 
-		AND status IS NOT NULL
+		WHERE irma_status NOT IN ('UNREACHABLE', 'TIMEOUT', 'DONE', 'CANCELLED') 
+		AND irma_status IS NOT NULL
 	`)
 	err := row.Scan(&res)
 	if err != nil {

@@ -3,5 +3,5 @@ CREATE TABLE sessions (
 	dtmf text UNIQUE NOT NULL,
 	purpose text,
 	disclosed text,
-	status text,
+	irma_status text,
 	created timestamp NOT NULL DEFAULT now());
