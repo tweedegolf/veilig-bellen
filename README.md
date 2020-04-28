@@ -41,10 +41,47 @@ and set `CONNECT_ID` and `CONNECT_SECRET` environment variables before starting 
 6. Go to `localhost:8080/disclose?secret=` followed by the copied secret. The
    Irma attributes should be returned.
 
-### To build:
+## Manual build frontends
 
-#### Frontend public library
+You can build your own frontend manually by running:
 
-```bash
-docker-compose run frontend_public yarn run build
-```
+    docker-compose run -e BACKEND_URL="https://foo" frontend_public yarn run build-example
+
+    docker-compose run -e BACKEND_URL="https://foo" -e CCP_HOST="example.awsapps.com" frontend_agents yarn run build
+
+## Release artefacts
+
+We use the Nix package manager to build our release artefacts. Nix will not
+interfere with your system and will prevent your system's specifics from
+interfering with this project's builds. Nix can be installed with:
+
+    bash <(curl https://nixos.org/nix/install) --daemon
+
+This will create a directory in root, `/nix`, which stores all Nix packages,
+some nixbld users, a nix-daemon systemd service and make some changes to your
+system's `bashrc` in order to extend your `PATH` with Nix. For more information,
+see the [Nix manual](https://nixos.org/nix/manual/).
+
+To build the public frontend locally:
+
+    nix-build -A frontend-public
+
+This will leave a symlink called `result` which points to the resulting frontend
+library.
+
+The build for the backend docker container is similar, but requires a `vendor`
+directory for the backend as created by `go mod vendor`.
+
+    nix-build -A backend-image
+
+The resulting docker container can be loaded with:
+
+    docker load < result
+
+Or combine the steps with:
+
+    docker load < $(nix-build -A backend-image --no-out-link)
+
+Nix will cache builds and dependencies so builds are instant when no changes are
+made. If `/nix` becomes too large, it can be cleaned up with
+`nix-collect-garbage`.

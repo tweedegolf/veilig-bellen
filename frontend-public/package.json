@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "NODE_ENV=production parcel build --no-source-maps -d dist --target browser --bundle-node-modules src/lib.mjs"
+    "prepare": "NODE_ENV=production parcel build --no-source-maps -d dist --target browser --bundle-node-modules src/lib.mjs",
+    "build-example": "NODE_ENV=production parcel build --no-source-maps -d dist --bundle-node-modules src/example.html"
   },
   "dependencies": {
     "@babel/polyfill": "^7.8.7",

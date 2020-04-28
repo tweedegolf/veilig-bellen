@@ -14,6 +14,10 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <script src="./lib.mjs"></script>
+    <script>
+        window.BACKEND_HOST = process.env.BACKEND_HOST;
+        window.PURPOSE = process.env.PURPOSE;
+    </script>
 </head>
 
 <body>
@@ -27,7 +31,7 @@
         </div>
         <div class="card-action">
             <button class="waves-effect waves-light btn"
-                onClick="veiligBellen.start({ hostname: 'backend.veiligbellen.test.tweede.golf', purpose: 'foo'})">
+                onClick="veiligBellen.start({ hostname: window.BACKEND_HOST, purpose: window.PURPOSE})">
                 Place your call!
                 <i class="material-icons right">call</i>
             </button>
