@@ -9,6 +9,7 @@ import "io"
 import "log"
 import "net/http"
 import "time"
+import "regexp"
 
 import "github.com/gorilla/websocket"
 import "github.com/privacybydesign/irmago"
@@ -21,6 +22,8 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
+
+var irmaExternalURLRegexp *regexp.Regexp
 
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
@@ -91,16 +94,14 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var session SessionResponse
-
 	session.SessionPtr = pkg.SessionPtr
-
-	if cfg.irmaExternalURLRegexp != nil {
+	session.Phonenumber = cfg.phonenumber(dtmf)
+	
+	if irmaExternalURLRegexp != nil {
 		// Rewrite IRMA server url to match irma-external-url arg
 		baseURL := fmt.Sprintf("%v/irma/session", cfg.IrmaExternalURL)
-		session.SessionPtr.URL = cfg.irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)
+		session.SessionPtr.URL = irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)
 	}
-
-	session.Phonenumber = cfg.phonenumber(dtmf)
 
 	// Update the request server URL to include the session token.
 	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)

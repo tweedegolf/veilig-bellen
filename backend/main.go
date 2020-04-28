@@ -27,7 +27,6 @@ type Configuration struct {
 	PurposeToAttributes   map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                    Database
 	irmaPoll              IrmaPoll
-	irmaExternalURLRegexp *regexp.Regexp
 }
 
 func main() {
@@ -103,7 +102,7 @@ func main() {
 
 	cfg.irmaPoll = makeIrmaPoll()
 	if cfg.IrmaExternalURL != "" {
-		cfg.irmaExternalURLRegexp = regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
+		irmaExternalURLRegexp = regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
 	}
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
