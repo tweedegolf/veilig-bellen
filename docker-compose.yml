@@ -73,6 +73,8 @@ services:
     - "src/index.html"
     environment:
     - HOME=/tmp/nodehome
+    - BACKEND_URL=https://backend.veiligbellen.test.tweede.golf
+    - CCP_HOST=sarif.awsapps.com
     networks:
     - default
     expose: [1234]
@@ -91,6 +93,8 @@ services:
     - "src/example.html"
     environment:
     - HOME=/tmp/nodehome
+    - BACKEND_URL=https://backend.veiligbellen.test.tweede.golf
+    - PURPOSE=foo
     networks:
     - default
     expose: [1234]

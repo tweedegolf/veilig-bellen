@@ -38,7 +38,15 @@ bin/up.sh
 6. Go to `localhost:8080/disclose?secret=` followed by the copied secret. The
    Irma attributes should be returned.
 
-### Release artefacts
+## Manual build frontends
+
+You can build your own frontend manually by running:
+
+    docker-compose run -e BACKEND_URL="https://foo" frontend_public yarn run build-example
+
+    docker-compose run -e BACKEND_URL="https://foo" -e CCP_HOST="example.awsapps.com" frontend_agents yarn run build
+
+## Release artefacts
 
 We use the Nix package manager to build our release artefacts. Nix will not
 interfere with your system and will prevent your system's specifics from
