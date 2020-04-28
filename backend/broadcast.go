@@ -9,8 +9,6 @@ type Message struct {
 	Value string
 }
 
-type Listener chan Message
-
 type subscription struct {
 	feed     string
 	listener chan<- Message

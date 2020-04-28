@@ -181,7 +181,7 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 
-	statusUpdates := make(chan Message)
+	statusUpdates := make(chan Message, 2)
 	cfg.broadcaster.Subscribe(sessionToken, statusUpdates)
 	defer cfg.broadcaster.Unsubscribe(sessionToken, statusUpdates)
 
@@ -322,7 +322,7 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.
 func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
-	waitListStatus := make(Listener)
+	waitListStatus := make(chan Message, 2)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

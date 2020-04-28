@@ -13,7 +13,7 @@ import (
 // When the IRMA session finishes, we store the disclosed attributes in the
 // database.
 func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
-	sessionUpdates := make(chan Message)
+	sessionUpdates := make(chan Message, 2)
 	cfg.broadcaster.Subscribe(sessionToken, sessionUpdates)
 	defer cfg.broadcaster.Unsubscribe(sessionToken, sessionUpdates)
 
