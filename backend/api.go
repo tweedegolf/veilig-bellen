@@ -91,7 +91,11 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var session SessionResponse
+	
 	session.SessionPtr = pkg.SessionPtr
+	baseURL := fmt.Sprintf("%v/irma/session", cfg.IrmaExternalURL)
+	session.SessionPtr.URL = cfg.irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)
+	
 	session.Phonenumber = cfg.phonenumber(dtmf)
 
 	// Update the request server URL to include the session token.
@@ -126,7 +130,7 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 		} else {
 			return ""
 		}
-	}
+	} 
 
 	// At this point, the IRMA session is done.
 	result := &server.SessionResult{}

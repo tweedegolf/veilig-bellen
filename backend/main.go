@@ -7,6 +7,7 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
+import "regexp"
 
 import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
@@ -17,14 +18,16 @@ import _ "github.com/lib/pq"
 const ExpireDelay = time.Hour
 
 type Configuration struct {
-	PostgresAddress     string                             `json:"database,omitempty"`
-	ListenAddress       string                             `json:"listen-address,omitempty"`
-	InternalAddress     string                             `json:"internal-address,omitempty"`
-	IrmaServerURL       string                             `json:"irma-server,omitempty"`
-	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
-	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
-	db                  Database
-	irmaPoll            IrmaPoll
+	PostgresAddress       string                             `json:"database,omitempty"`
+	ListenAddress         string                             `json:"listen-address,omitempty"`
+	InternalAddress       string                             `json:"internal-address,omitempty"`
+	IrmaServerURL         string                             `json:"irma-server,omitempty"`
+	IrmaExternalURL       string                             `json:"irma-external-url,omitempty"`
+	ServicePhoneNumber    string                             `json:"phone-number,omitempty"`
+	PurposeToAttributes   map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
+	db                    Database
+	irmaPoll              IrmaPoll
+	irmaExternalURLRegexp regexp.Regexp
 }
 
 func main() {
@@ -35,6 +38,7 @@ func main() {
 	listenAddress := flag.String("listen-address", "", `The address to listen for external requests, e.g. ":8080".`)
 	internalAddress := flag.String("internal-address", "", `The address to listen for internal requests such as /call. Defaults to listen-address.`)
 	irmaServer := flag.String("irma-server", "", `The address of the IRMA server to use for disclosure.`)
+	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
 
@@ -63,6 +67,9 @@ func main() {
 	if *irmaServer != "" {
 		cfg.IrmaServerURL = *irmaServer
 	}
+	if *irmaExternalURL != "" {
+		cfg.IrmaExternalURL = *irmaExternalURL
+	}
 	if *phoneNumber != "" {
 		cfg.ServicePhoneNumber = *phoneNumber
 	}
@@ -72,7 +79,6 @@ func main() {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
 	}
-
 	if cfg.PostgresAddress == "" {
 		panic("option required: database")
 	}
@@ -81,6 +87,9 @@ func main() {
 	}
 	if cfg.IrmaServerURL == "" {
 		panic("option required: irma-server")
+	}
+	if cfg.IrmaExternalURL == "" {
+		cfg.IrmaExternalURL = cfg.IrmaServerURL
 	}
 	if cfg.ServicePhoneNumber == "" {
 		panic("option required: phone-number")
@@ -96,6 +105,7 @@ func main() {
 	cfg.db = Database{db}
 
 	cfg.irmaPoll = makeIrmaPoll()
+	cfg.irmaExternalURLRegexp = *regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
