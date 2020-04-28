@@ -118,6 +118,7 @@ func (db Database) AdoptOrphans() ([]string, error) {
 		FROM backends
 		WHERE sessions.backend_id = backends.backend_id
 		AND backends.last_seen < (now() - interval '3 seconds')
+		AND backends.backend_id != $1
 		RETURNING sessions.secret`,
 		db.backendIdentity)
 	if err != nil {
