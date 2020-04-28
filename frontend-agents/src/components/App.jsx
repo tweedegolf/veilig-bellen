@@ -6,7 +6,7 @@ import Alert from '@material-ui/lab/Alert';
 import ContactInfo from './ContactInfo';
 import Ccp from './Ccp';
 
-const App = () => {
+const App = ({ backendUrl, ccpHost }) => {
     const [state, setState] = useState({ mode: 'idle' });
     const [error, setError] = useState(null);
 
@@ -33,7 +33,7 @@ const App = () => {
             <h1>IRMA veilig bellen ({state.mode})</h1>
             {error && <Alert severity="error">{error}</Alert>}
             <ContactInfo {...state} />
-            <Ccp {...{ setError, onContact, onDisclosure, onConnect, onDisconnect }} />
+            <Ccp {...{ setError, onContact, onDisclosure, onConnect, onDisconnect, backendUrl, ccpHost }} />
         </CssBaseline>
     );
 };

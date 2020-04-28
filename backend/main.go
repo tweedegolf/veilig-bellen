@@ -7,9 +7,7 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
-
-import irma "github.com/privacybydesign/irmago"
-
+import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
 import _ "github.com/lib/pq"
 
@@ -22,6 +20,7 @@ type Configuration struct {
 	ListenAddress       string                             `json:"listen-address,omitempty"`
 	InternalAddress     string                             `json:"internal-address,omitempty"`
 	IrmaServerURL       string                             `json:"irma-server,omitempty"`
+	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
 	db                  Database
@@ -37,6 +36,7 @@ func main() {
 	listenAddress := flag.String("listen-address", "", `The address to listen for external requests, e.g. ":8080".`)
 	internalAddress := flag.String("internal-address", "", `The address to listen for internal requests such as /call. Defaults to listen-address.`)
 	irmaServer := flag.String("irma-server", "", `The address of the IRMA server to use for disclosure.`)
+	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
 
@@ -65,6 +65,9 @@ func main() {
 	if *irmaServer != "" {
 		cfg.IrmaServerURL = *irmaServer
 	}
+	if *irmaExternalURL != "" {
+		cfg.IrmaExternalURL = *irmaExternalURL
+	}
 	if *phoneNumber != "" {
 		cfg.ServicePhoneNumber = *phoneNumber
 	}
@@ -74,7 +77,6 @@ func main() {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
 	}
-
 	if cfg.PostgresAddress == "" {
 		panic("option required: database")
 	}

@@ -3,11 +3,10 @@ import axios from 'axios';
 
 import 'amazon-connect-streams';
 
-// TODO change to ENV variables in parcel build process.
-const vbServerDisclose = 'https://backend.veiligbellen.test.tweede.golf/disclose';
-const ccpUrl = 'https://sarif.awsapps.com/connect/ccp-v2';
+const Ccp = ({ setError, onContact, onDisclosure, onConnect, onDisconnect, backendUrl, ccpHost }) => {
+    const backendDiscloseUrl = `${backendUrl}/disclose`;
+    const ccpUrl = `https://${ccpHost}/connect/ccp-v2`;
 
-const Ccp = ({ setError, onContact, onDisclosure, onConnect, onDisconnect }) => {
     const containerRef = useCallback(element => {
         if (element !== null) {
             connect.core.initCCP(element, {
