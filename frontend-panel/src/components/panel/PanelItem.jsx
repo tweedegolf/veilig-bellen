@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Card, CardContent, Container, Typography } from '@material-ui/core';
+import { Grid, Card, CardContent, Container, Typography, CircularProgress } from '@material-ui/core';
 
 const PanelItem = ({ title, value }) => {
     return (
@@ -11,7 +11,7 @@ const PanelItem = ({ title, value }) => {
                             {title}
                         </Typography>
                         <Typography variant="h1" component="p">
-                            {value}
+                            {value !== null ? value : <CircularProgress/>}
                         </Typography>
                     </Container>
                 </CardContent>
