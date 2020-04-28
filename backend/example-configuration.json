@@ -5,5 +5,6 @@
 	"phone-number": "+31123456789",
 	"purpose-map": {
 		"foo": [[["irma-demo.MijnOverheid.root.BSN"]]]
-	}
+	},
+	"irma-external-url": "http://irma.veiligbellen.test.tweede.golf"
 }
