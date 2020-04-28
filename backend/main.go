@@ -142,6 +142,7 @@ func main() {
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 	externalMux.HandleFunc("/metrics", cfg.handleMetrics)
+	externalMux.HandleFunc("/session/update", cfg.handleSessionUpdate)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()

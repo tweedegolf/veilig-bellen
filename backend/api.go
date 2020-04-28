@@ -122,10 +122,10 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 
 	var status string
 	for status = range irmaStatus {
-		if status == "INITIALIZED" || status == "CONNECTED" {
+		if status == "IRMA-INITIALIZED" || status == "IRMA-CONNECTED" {
 			time.Sleep(time.Second)
 			continue
-		} else if status == "DONE" {
+		} else if status == "IRMA-DONE" {
 			break
 		} else {
 			return ""
@@ -270,6 +270,12 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Write(responseJSON)
+}
+
+func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
+	secret := r.FormValue("secret")
+	status := r.FormValue("status")
+	cfg.irmaPoll.tryNotify(secret, status)
 }
 
 func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
