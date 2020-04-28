@@ -93,8 +93,12 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	var session SessionResponse
 	
 	session.SessionPtr = pkg.SessionPtr
-	baseURL := fmt.Sprintf("%v/irma/session", cfg.IrmaExternalURL)
-	session.SessionPtr.URL = cfg.irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)
+
+	if cfg.irmaExternalURLRegexp != nil {
+		// Rewrite IRMA server url to match irma-external-url arg
+		baseURL := fmt.Sprintf("%v/irma/session", cfg.IrmaExternalURL)
+		session.SessionPtr.URL = cfg.irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)
+	}
 	
 	session.Phonenumber = cfg.phonenumber(dtmf)
 
