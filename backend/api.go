@@ -23,7 +23,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-var irmaExternalURLRegexp *regexp.Regexp
+var irmaExternalURLRegexp *regexp.Regexp = regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
 
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
@@ -96,8 +96,8 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	var session SessionResponse
 	session.SessionPtr = pkg.SessionPtr
 	session.Phonenumber = cfg.phonenumber(dtmf)
-	
-	if irmaExternalURLRegexp != nil {
+
+	if cfg.IrmaExternalURL != "" {
 		// Rewrite IRMA server url to match irma-external-url arg
 		baseURL := fmt.Sprintf("%v/irma/session", cfg.IrmaExternalURL)
 		session.SessionPtr.URL = irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)

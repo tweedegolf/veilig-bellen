@@ -7,8 +7,6 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
-import "regexp"
-
 import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
 import _ "github.com/lib/pq"
@@ -18,15 +16,15 @@ import _ "github.com/lib/pq"
 const ExpireDelay = time.Hour
 
 type Configuration struct {
-	PostgresAddress       string                             `json:"database,omitempty"`
-	ListenAddress         string                             `json:"listen-address,omitempty"`
-	InternalAddress       string                             `json:"internal-address,omitempty"`
-	IrmaServerURL         string                             `json:"irma-server,omitempty"`
-	IrmaExternalURL       string                             `json:"irma-external-url,omitempty"`
-	ServicePhoneNumber    string                             `json:"phone-number,omitempty"`
-	PurposeToAttributes   map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
-	db                    Database
-	irmaPoll              IrmaPoll
+	PostgresAddress     string                             `json:"database,omitempty"`
+	ListenAddress       string                             `json:"listen-address,omitempty"`
+	InternalAddress     string                             `json:"internal-address,omitempty"`
+	IrmaServerURL       string                             `json:"irma-server,omitempty"`
+	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
+	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
+	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
+	db                  Database
+	irmaPoll            IrmaPoll
 }
 
 func main() {
@@ -101,9 +99,6 @@ func main() {
 	cfg.db = Database{db}
 
 	cfg.irmaPoll = makeIrmaPoll()
-	if cfg.IrmaExternalURL != "" {
-		irmaExternalURLRegexp = regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
-	}
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
