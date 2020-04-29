@@ -52,6 +52,8 @@ func (session *Session) tryNotify(status string) {
 	for _, channel := range session.channels {
 		select {
 		case channel <- status:
+			// Message sent
+			break;
 		default:
 			// Message discarded
 		}
@@ -115,7 +117,9 @@ func irmaPollDaemon(cfg Configuration) {
 				if time.Since(session.created).Hours() > 2 {
 					// Close and delete all listeners for this session.
 					for _, channel := range session.channels {
-						close(channel)
+						if channel != nil {
+							close(channel)
+						}
 					}
 					delete(poll.sessions, sessionToken)
 				}

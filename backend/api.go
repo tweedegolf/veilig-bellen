@@ -8,7 +8,6 @@ import "fmt"
 import "io"
 import "log"
 import "net/http"
-import "time"
 import "regexp"
 
 import "github.com/gorilla/websocket"
@@ -125,14 +124,12 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // database. This can be in case the attributes were requested but not yet
 // stored in the database in order to also retrieve them immediately.
 func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
-	// TODO: Should detect failure cases that can't be recovered from and abort.
 	irmaStatus := make(chan string)
 	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
 
 	var status string
 	for status = range irmaStatus {
 		if status == "IRMA-INITIALIZED" || status == "IRMA-CONNECTED" {
-			time.Sleep(time.Second)
 			continue
 		} else if status == "IRMA-DONE" {
 			break
@@ -257,9 +254,6 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	} else if disclosed == "" {
-		// disclosed not set yet
-		// TODO We want to poll the IRMA server here, but we need the IRMA
-		// session token.
 		log.Printf("disclosed attributes not yet received")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
