@@ -37,15 +37,20 @@ const App = ({ backendUrl, ccpHost }) => {
     const [state, setState] = useState({ mode: 'idle' });
     const [error, setError] = useState(null);
 
-    const onContact = async (secret, phonenumber) => {
-        setState({ mode: 'establishing', secret, phonenumber });
+    const resetState = (state) => {
+        setError(null);
+        setState(state);
+    };
 
-        await getDisclosure(backendUrl, secret);
-        if (response.status === 200) {
-            const { disclosed, purpose } = response.data;
+    const onContact = async (secret, phonenumber) => {
+        resetState({ mode: 'establishing', secret, phonenumber });
+
+        try {
+            const { disclosed, purpose } = await getDisclosure(backendUrl, secret);
             setState(state => ({ ...state, mode: 'disclosed', disclosed, purpose }));
-        } else {
-            setError('Failed to retrieve disclosed data');
+        } catch (e) {
+            console.error(e);
+            setError("Failed to retrieve disclosed attributes");
         }
     };
 

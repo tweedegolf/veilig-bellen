@@ -10,12 +10,13 @@ const App = ({ hostname, purpose, onClose }) => {
     const [state, setState] = useState('INIT');
     const [storedPhonenumber, setPhonenumber] = useState(null);
 
+    const setError = () => { setState('ERROR'); };
+
     const onStartSession = async () => {
-        // TODO better error handling
         const response = await axios.get(`https://${hostname}/session`, { params: { purpose } });
 
         if (response.status !== 200) {
-            console.error(response.statusCode);
+            setError();
             return;
         }
 
@@ -26,7 +27,7 @@ const App = ({ hostname, purpose, onClose }) => {
 
         client.addEventListener('error', (error) => {
             console.error('Connect Error: ', error);
-            setState('ERROR');
+            setError();
         });
 
         client.addEventListener('open', () => {
@@ -38,7 +39,12 @@ const App = ({ hostname, purpose, onClose }) => {
             console.log('Message', event.data);
         });
 
-        await handleSession(sessionPtr);
+        try {
+            await handleSession(sessionPtr);
+        } catch (e) {
+            console.error(e);
+            setError();
+        }
     };
 
     return <div className="dialog">

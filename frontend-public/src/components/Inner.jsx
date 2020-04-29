@@ -13,7 +13,6 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
         }
 
         QRCode.toString(makePhoneLink(phonenumber), { format: 'svg' }).then((str, err) => {
-            console.log(err, str);
             if (!err) {
                 setQrcodeSvg(str);
             }
@@ -57,7 +56,8 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
         case 'DONE':
             return <p>Uw gesprek is voltooid.</p>;
         default:
-            return <p>Default state: {state}</p>;
+        case 'ERROR':
+            return <p>Er ging iets mis, probeer het opnieuw.</p>;
     }
 };
 

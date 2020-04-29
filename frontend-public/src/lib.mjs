@@ -10,7 +10,7 @@ const veiligBellen = {
             return;
         }
 
-        veiligBellen.activeElement = document.createElement("div");
+        veiligBellen.activeElement = document.createElement('div');
         veiligBellen.activeElement.setAttribute('class', 'irma-veilig-bellen-body');
         document.body.appendChild(veiligBellen.activeElement);
 
