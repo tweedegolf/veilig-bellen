@@ -30,11 +30,13 @@ type Configuration struct {
 	ListenAddress       string                             `json:"listen-address,omitempty"`
 	InternalAddress     string                             `json:"internal-address,omitempty"`
 	IrmaServerURL       string                             `json:"irma-server,omitempty"`
+	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
+	connect             ConnectConfiguration
 	db                  Database
 	irmaPoll            IrmaPoll
-	connect             ConnectConfiguration
+	connectPoll         ConnectPoll
 }
 
 func main() {
@@ -45,6 +47,7 @@ func main() {
 	listenAddress := flag.String("listen-address", "", `The address to listen for external requests, e.g. ":8080".`)
 	internalAddress := flag.String("internal-address", "", `The address to listen for internal requests such as /call. Defaults to listen-address.`)
 	irmaServer := flag.String("irma-server", "", `The address of the IRMA server to use for disclosure.`)
+	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
 
@@ -79,6 +82,9 @@ func main() {
 	}
 	if *irmaServer != "" {
 		cfg.IrmaServerURL = *irmaServer
+	}
+	if *irmaExternalURL != "" {
+		cfg.IrmaExternalURL = *irmaExternalURL
 	}
 	if *phoneNumber != "" {
 		cfg.ServicePhoneNumber = *phoneNumber
@@ -125,6 +131,7 @@ func main() {
 	cfg.db = Database{db}
 
 	cfg.irmaPoll = makeIrmaPoll()
+	cfg.connectPoll = makeConnectPoll()
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
@@ -135,14 +142,16 @@ func main() {
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go expireDaemon(cfg)
-	go pollDaemon(cfg)
+	go irmaPollDaemon(cfg)
+	go connectPollDaemon(cfg)
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
-	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 	externalMux.HandleFunc("/metrics", cfg.handleMetrics)
 	externalMux.HandleFunc("/session/update", cfg.handleSessionUpdate)
+	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
+	externalMux.HandleFunc("/agent-feed", cfg.handleAgentFeed)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()

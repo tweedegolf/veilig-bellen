@@ -9,6 +9,7 @@ import "io"
 import "log"
 import "net/http"
 import "time"
+import "regexp"
 
 import "github.com/gorilla/websocket"
 import "github.com/privacybydesign/irmago"
@@ -23,6 +24,8 @@ var upgrader = websocket.Upgrader{
 	// Accept any origin
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
+
+var irmaExternalURLRegexp *regexp.Regexp = regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
 
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
@@ -97,6 +100,12 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	session.SessionPtr = pkg.SessionPtr
 	session.Phonenumber = cfg.phonenumber(dtmf)
 	session.Dtmf = dtmf
+
+	if cfg.IrmaExternalURL != "" {
+		// Rewrite IRMA server url to match irma-external-url arg
+		baseURL := fmt.Sprintf("%v/irma/session", cfg.IrmaExternalURL)
+		session.SessionPtr.URL = irmaExternalURLRegexp.ReplaceAllString(pkg.SessionPtr.URL, baseURL)
+	}
 
 	// Update the request server URL to include the session token.
 	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
@@ -194,7 +203,6 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println("failed to write session status:", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
 			break
 		}
 	}
@@ -296,4 +304,37 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(responseJSON)
+}
+
+// Status panel waitlist status feed.
+// Upgrade connection to websocket, register a channel with the ConnectPoll,
+// pass updates to websocket.
+func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
+	waitListStatus := make(Listener)
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("failed to upgrade session status connection:", err)
+		return
+	}
+
+	defer ws.Close()
+	defer cfg.connectPoll.unregisterListener(waitListStatus, false)
+	cfg.connectPoll.registerListener(waitListStatus)
+
+	for update := range waitListStatus {
+		msg, err := json.Marshal(update)
+
+		if err != nil {
+			log.Printf("failed to marshal agent feed update: %#v", err)
+			return
+		}
+
+		err = ws.WriteMessage(websocket.TextMessage, msg)
+
+		if err != nil {
+			break
+		}
+	}
+
 }

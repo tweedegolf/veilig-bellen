@@ -88,7 +88,7 @@ func (poll *IrmaPoll) findOrCreate(sessionToken string) *Session {
 // every second.
 // Handles listener creation, destroy, and notification operation
 // messages.
-func pollDaemon(cfg Configuration) {
+func irmaPollDaemon(cfg Configuration) {
 	transport := irma.NewHTTPTransport("")
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	poll := &cfg.irmaPoll
@@ -104,6 +104,11 @@ func pollDaemon(cfg Configuration) {
 					transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
 					status = "IRMA-" + pollIrmaSession(transport)
 					session.tryNotify(status)
+				
+					err := cfg.db.updateSessionStatus(sessionToken, status)
+					if err != nil {
+						log.Printf("IrmaPoll failed to update session status: %#v", err);
+					}
 				}
 
 				// Clean up all sessions after 2 hours regardless.
