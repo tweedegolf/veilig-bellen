@@ -9,6 +9,8 @@ RUN set -eux; \
     ; \
     rm -rf /var/lib/apt/lists/*;
 
-RUN wget https://github.com/privacybydesign/irmago/releases/download/v0.5.0-rc.1/irma-master-linux-amd64 -o /usr/local/bin/irma
+RUN wget https://github.com/privacybydesign/irmago/releases/download/v0.5.0-rc.1/irma-master-linux-amd64 -O /usr/local/bin/irma
+RUN chmod +x /usr/local/bin/irma
 
+WORKDIR /usr/local/bin
 CMD irma server -v
