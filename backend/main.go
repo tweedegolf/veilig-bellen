@@ -20,6 +20,8 @@ type Configuration struct {
 	ListenAddress       string                             `json:"listen-address,omitempty"`
 	InternalAddress     string                             `json:"internal-address,omitempty"`
 	IrmaServerURL       string                             `json:"irma-server,omitempty"`
+	IrmaHeaderKey       string                             `json:"irma-header-key,omitempty"`
+	IrmaHeaderValue     string                             `json:"irma-header-value,omitempty"`
 	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
@@ -36,6 +38,8 @@ func main() {
 	listenAddress := flag.String("listen-address", "", `The address to listen for external requests, e.g. ":8080".`)
 	internalAddress := flag.String("internal-address", "", `The address to listen for internal requests such as /call. Defaults to listen-address.`)
 	irmaServer := flag.String("irma-server", "", `The address of the IRMA server to use for disclosure.`)
+	irmaHeaderKey := flag.String("irma-header-key", "", `The header key to send with IRMA server session requests, i.e. Authorization. Defaults to Authorization. Will only be used if value is also set.`)
+	irmaHeaderValue := flag.String("irma-header-value", "", `The header value to send with IRMA server session requests, i.e. the token passphrase. Will be sent as Authorization if key is not set. No header will be added if not set.`)
 	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
@@ -65,6 +69,12 @@ func main() {
 	if *irmaServer != "" {
 		cfg.IrmaServerURL = *irmaServer
 	}
+	if *irmaHeaderKey != "" {
+		cfg.IrmaHeaderKey = *irmaHeaderKey
+	}
+	if *irmaHeaderValue != "" {
+		cfg.IrmaHeaderValue = *irmaHeaderValue
+	}
 	if *irmaExternalURL != "" {
 		cfg.IrmaExternalURL = *irmaExternalURL
 	}
@@ -91,6 +101,9 @@ func main() {
 	}
 	if cfg.PurposeToAttributes == nil {
 		panic("option required: purpose-map")
+	}
+	if cfg.IrmaHeaderValue != "" && cfg.IrmaHeaderKey == "" {
+		panic("irma-header-value is required when setting irma-header-key")
 	}
 
 	db, err := sql.Open("postgres", cfg.PostgresAddress)
