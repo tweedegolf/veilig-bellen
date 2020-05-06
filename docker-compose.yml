@@ -92,7 +92,9 @@ services:
     expose: [1234]
 
   frontend_panel:
-    image: "node:buster-slim"
+    build:
+      dockerfile: './node.Dockerfile'
+      context: './docker'
     user: "$USER_ID:$GROUP_ID"
     volumes:
     - "./frontend-panel:/app:cached"
@@ -110,10 +112,9 @@ services:
     - default
     expose: [1234]
 
-
   frontend_public:
     build:
-      dockerfile: './backend.Dockerfile'
+      dockerfile: './node.Dockerfile'
       context: './docker'
     user: "$USER_ID:$GROUP_ID"
     volumes:
