@@ -48,7 +48,7 @@ const App = ({ hostname, purpose, onClose }) => {
     };
 
     return <div className="dialog">
-        <button onClick={onClose}>Close</button>
+        <button className="button-icon" onClick={onClose}><i class="material-icons">close</i></button>
         <Inner {...{ state, onStartSession, phonenumber: storedPhonenumber }} />
     </div>
 };

@@ -28,21 +28,23 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
     switch (state) {
         case 'INIT':
             return <Fragment>
-                <p>Tekst over IRMA en knop</p>
-                <button onClick={onStartSession}>Bel!</button>
+                <h2>Wilt u met een medewerker telefoneren?</h2>
+                <p className="underline">Klik op de onderstaande knop om verder te gaan</p>
+                <button onClick={onStartSession}><i class="material-icons">call</i> Start het gesprek</button>
             </Fragment>;
         case 'IRMA-INITIALIZED':
         case 'IRMA-CONNECTED':
             return <p>Volg de instructie in de IRMA interactie.</p>;
         case 'IRMA-DONE':
             return <Fragment>
-                <p>Start nu het telefoongesprek met uw bel-applicatie.</p>
-                <p>
+                <h2>U kunt nu het gesprek starten via uw bel-applicatie</h2>
+                <p className="underline">>
                     Indien u geen telefoon hebt gebruikt om uw IRMA sessie door te zetten,
                     kunt u <a href={makePhoneLink(phonenumber)}>{phonenumber}</a> bellen of de volgende QR-code inscannen met een applicatie:
-                </p>
+                </p>  
                 <div className="phonenumber-qrcode" ref={qrcodeContainer} >laden...</div>
                 <p>U hoort eerst een aantal tonen, waarna u in de wachtrij geplaatst wordt.</p>
+                
             </Fragment>;
         case 'IRMA-CANCELLED':
             return <p>U hebt de IRMA interactie gestopt.</p>;
