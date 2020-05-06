@@ -1,3 +1,4 @@
 backend/vendor
 bin/env.sh
 /result*
+.env

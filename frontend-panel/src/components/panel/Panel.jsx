@@ -43,7 +43,7 @@ const Panel = () => {
 
     if (!state.connected) {
         return (
-            <Backdrop open={true} classNamex={classes.backdrop}>
+            <Backdrop open={true} className={classes.backdrop}>
                 <CircularProgress color="inherit" />
                 <Typography variant="h4" component="h1" gutterBottom className={classes.connectMsg}>
                     Connecting to server...

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 )
@@ -44,13 +43,19 @@ func connectPollDaemon(cfg Configuration) {
 	defer poll.bc.Close()
 	go poll.bc.daemon()
 
-	var status ConnectStatusResponse
 	for {
 
 		select {
 		case <-pollTicker.C:
-			status = pollConnect()
-			poll.notify(Message{"kcc", "amazon-connect", status})
+			response, err := cfg.getConnectCurrentMetrics()
+
+			if err != nil {
+				log.Printf("Connect poll could not get Amazon Connect metrics")
+				continue
+			}
+			// log.Printf("Amazon Connect status: %v", response)
+
+			poll.notify(Message{"kcc", "amazon-connect", response})
 		case <-dbTicker.C:
 			count, err := cfg.db.activeSessionCount()
 			if err != nil {
@@ -61,37 +66,6 @@ func connectPollDaemon(cfg Configuration) {
 		}
 	}
 }
-
-// TODO get status from amazon connect
-func pollConnect() ConnectStatusResponse {
-	status := "{\"DataSnapshotTime\":\"2020-04-15T20:49:11Z\",\"MetricResults\":[{\"Collections\":[{\"Metric\":{\"Name\":\"AGENTS_ONLINE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_AVAILABLE\",\"Unit\":\"COUNT\"},\"Value\":1},{\"Metric\":{\"Name\":\"AGENTS_ON_CALL\",\"Unit\":\"COUNT\"},\"Value\":0},{\"Metric\":{\"Name\":\"CONTACTS_IN_QUEUE\",\"Unit\":\"COUNT\"},\"Value\":0}],\"Dimensions\":null}],\"NextToken\":null}"
-	var message ConnectStatusResponse
-	err := json.Unmarshal([]byte(status), &message)
-	if err != nil {
-		log.Printf("Could not encode connect status message %#v", err)
-	}
-	return message
-}
-
-type Metric struct {
-	Name string
-	Unit string
-}
-
-type MetricCollection struct {
-	Metric Metric
-	Value  interface{}
-}
-
-type MetricResult struct {
-	Collections []MetricCollection
-}
-
-type ConnectStatusResponse struct {
-	DataSnapshotTime string
-	MetricResults    []MetricResult
-}
-
 type ActiveSessionsMessage struct {
 	Count int `json:"count"`
 }
