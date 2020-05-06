@@ -37,8 +37,8 @@ services:
 
   backend:
     build:
-      dockerfile: './docker/backend.Dockerfile'
-      context: .
+      dockerfile: './backend.Dockerfile'
+      context: './docker'
       args:
         GO_VERSION: "1.14"
         USER_ID: "$USER_ID"
@@ -70,7 +70,9 @@ services:
     expose: [8080]
 
   frontend_agents:
-    image: "node:buster-slim"
+    build:
+      dockerfile: './node.Dockerfile'
+      context: './docker'
     user: "$USER_ID:$GROUP_ID"
     volumes:
     - "./frontend-agents:/app:cached"
@@ -110,7 +112,9 @@ services:
 
 
   frontend_public:
-    image: "node:buster-slim"
+    build:
+      dockerfile: './backend.Dockerfile'
+      context: './docker'
     user: "$USER_ID:$GROUP_ID"
     volumes:
     - "./frontend-public:/app:cached"
