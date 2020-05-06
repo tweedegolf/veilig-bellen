@@ -15,6 +15,7 @@
     "axios": "^0.19.2",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
+    "regenerator-runtime": "^0.13.5",
     "socket.io-client": "^2.3.0"
   },
   "devDependencies": {
