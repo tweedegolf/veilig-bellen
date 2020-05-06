@@ -80,6 +80,17 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	transport := irma.NewHTTPTransport(cfg.IrmaServerURL)
+
+	if cfg.IrmaHeaderValue != "" {
+		var headerKey string
+		headerKey = cfg.IrmaHeaderKey
+		if headerKey == "" {
+			headerKey = "Authorization"
+		}
+
+		transport.SetHeader(headerKey, cfg.IrmaHeaderValue)
+	}
+
 	var pkg server.SessionPackage
 	err = transport.Post("session", &pkg, request)
 	if err != nil {

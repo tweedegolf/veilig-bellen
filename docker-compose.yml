@@ -8,7 +8,7 @@ services:
     networks:
       - default
     ports: ["0.0.0.0:8088:8088"]
-    command: ["irma", "server", "-v", "--url", "http://${HOST_LAN_IP}:8088"]
+    command: ["irma", "server", "-v", "--url", "http://${HOST_LAN_IP}:8088", "--no-auth=false", "--requestors", '{"veilig-bellen":{"auth_method":"token","key":"12345"}}']
 
   nginx:
     image: nginx:1.17
@@ -54,6 +54,8 @@ services:
     - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
     - "--listen-address=:8080"
     - "--irma-server=http://irma:8088"
+    - "--irma-header-key=Authorization"
+    - "--irma-header-value=12345"
     - "--phone-number=+318000227348"
     - '--purpose-map={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}'
     - "--connect-instance-id=503d5d31-de38-4803-bb39-02e98ee8891c"
