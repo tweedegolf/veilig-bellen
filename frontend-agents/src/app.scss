@@ -9,8 +9,7 @@ body {
 
 #container {
     height: 100%;
-    display: flex;
-    flex-direction: column;
+    padding: 1rem;
     font: sans-serif;
     
     h1 {
@@ -20,8 +19,9 @@ body {
 }
 
 .ccp {
-    flex-grow: 1;
+    height: calc(100vh - 8rem);
     background-color: gray;
+
     iframe {
         border: none;
     }

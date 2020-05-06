@@ -24,8 +24,9 @@ const Details = ({ data }) => (
 )
 
 const ContactInfo = ({ phonenumber, disclosed, purpose }) => (
-    phonenumber ? <Card>
+    phonenumber ? <Card>    
         <CardContent>
+        <h2>Attributen van contactpersoon</h2>
             <Details data={
                 [{ key: "phonenumber", value: phonenumber }, { key: "purpose", value: purpose }].concat(
                     disclosed ? disclosed.flat().map(attr => ({ key: attr.id, value: attr.rawvalue })) : []
