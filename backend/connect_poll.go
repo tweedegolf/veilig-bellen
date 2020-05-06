@@ -53,7 +53,6 @@ func connectPollDaemon(cfg Configuration) {
 				log.Printf("Connect poll could not get Amazon Connect metrics")
 				continue
 			}
-			// log.Printf("Amazon Connect status: %v", response)
 
 			poll.notify(Message{"kcc", "amazon-connect", response})
 		case <-dbTicker.C:
