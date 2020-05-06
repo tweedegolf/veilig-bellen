@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { useFeed } from '../../hooks';
 import { handleConnectStatus } from '../../util';
-import { Box, Container, Typography, Grid } from '@material-ui/core';
+import { Box, Container, Typography, Grid, CircularProgress, Backdrop } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import PanelItem from './PanelItem';
 
+const useStyles = makeStyles((theme) => ({
+    backdrop: {
+        color: '#fff',
+    },
+    'connectMsg': {
+        marginLeft: '1em',
+    }
+}));
+
 const Panel = () => {
+    const classes = useStyles();
     const [state, setState] = useState({
         connected: false,
         message: null,
@@ -31,17 +42,20 @@ const Panel = () => {
     });
 
     if (!state.connected) {
-        // Render disconnection message
-        return (<p>Connecting...</p>)
+        return (
+            <Backdrop open={true} className={classes.backdrop}>
+                <CircularProgress color="inherit" />
+                <Typography variant="h4" component="h1" gutterBottom className={classes.connectMsg}>
+                    Connecting to server...
+                </Typography>
+            </Backdrop>
+        );
     }
 
     // Render panel
     return (
         <Container maxWidth="md">
             <Box component="div" className="status-panel">
-                <Typography variant="h4" component="h1" gutterBottom>
-                    Status Panel
-                </Typography>
                 <Grid container spacing={3}>
                     <PanelItem title="Active Irma sessions" value={state.sessionCount} />
                     {state.connectStatus && (<>
@@ -53,7 +67,7 @@ const Panel = () => {
                 </Grid>
             </Box>
         </Container>
-    )
+    );
 };
 
 
