@@ -3,6 +3,7 @@ import axios from 'axios';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Alert from '@material-ui/lab/Alert';
+import Grid  from '@material-ui/core/Grid';
 
 import ContactInfo from './ContactInfo';
 import Ccp from './Ccp';
@@ -69,11 +70,19 @@ const App = ({ backendUrl, ccpHost }) => {
     };
 
     return (
-        <CssBaseline>
+        <CssBaseline>  
             <h1>IRMA veilig bellen ({state.mode})</h1>
             {error && <Alert severity="error">{error}</Alert>}
-            <ContactInfo {...state} />
-            <Ccp {...{ setError, onContact, onConnect, onDisconnect, ccpHost }} />
+             
+            <Grid container spacing={2}>
+                <Grid className="contactinfo" item xs={12} md={6}>
+                    <ContactInfo {...state} />
+                </Grid>
+                <Grid className="contactinfo" item xs={12} md={6}>
+                    <Ccp {...{ setError, onContact, onConnect, onDisconnect, ccpHost }} />    
+                </Grid>
+            </Grid>
+            
         </CssBaseline>
     );
 };
