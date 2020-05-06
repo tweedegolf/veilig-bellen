@@ -12,11 +12,16 @@ const removeFeedListener = (feedListeners) => (l) => feedListeners.remove(l)
 const initFeed = (backendHostname, feedListeners) => {
     let reconnectInterval = null;
     let websocket = null;
+    
     const connect = () => {
         // Cancel pending connection
         if (websocket !== null) {
-            websocket.onclose = () => console.log('Canceled connection attempt');
-            websocket.close();
+            if (websocket.readyState === WebSocket.CONNECTING) {
+                return; // Still trying to connect
+            } else {
+                websocket.onclose = () => console.log('Canceled connection attempt');
+                websocket.close();
+            }
         }
         // Try to reconnect
         console.log('Connecting to status feed...');
