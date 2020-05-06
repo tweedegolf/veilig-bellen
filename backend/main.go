@@ -7,6 +7,8 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
+import "os"
+
 import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
 import _ "github.com/lib/pq"
@@ -14,6 +16,14 @@ import _ "github.com/lib/pq"
 // Every backend node will ask the database to expire old sessions once every
 // ExpireDelay
 const ExpireDelay = time.Hour
+
+type ConnectConfiguration struct {
+	id           string                                    `json:"id,omitempty"`
+	secret       string                                    `json:"secret,omitempty"`
+	instanceId   string                                    `json:"instance,omitempty"`
+	queue        string                                    `json:"queue,omitempty"`
+	region       string                                    `json:"region,omitempty"`
+}
 
 type Configuration struct {
 	PostgresAddress     string                             `json:"database,omitempty"`
@@ -23,6 +33,7 @@ type Configuration struct {
 	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
 	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
 	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
+	connect             ConnectConfiguration
 	db                  Database
 	irmaPoll            IrmaPoll
 	connectPoll         ConnectPoll
@@ -39,6 +50,13 @@ func main() {
 	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
+
+	connectId := os.Getenv("CONNECT_ID") // Amazon endpoint user identifier
+	connectSecret := os.Getenv("CONNECT_SECRET") // Amazon endpoint user secret
+
+	connectInstanceId := flag.String("connect-instance-id", "", `Identifier of the Amazon Connect instance`)
+	connectQueue := flag.String("connect-queue", "", `Identifier of the Amazon Connect queue to show the metrics for`)
+	connectRegion := flag.String("connect-region", "", `The Amazon Connect region to use (i.e. eu-central-1)`)
 
 	flag.Parse()
 
@@ -77,6 +95,19 @@ func main() {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
 	}
+
+	if connectId != "" && connectSecret != "" {
+		cfg.connect = ConnectConfiguration{
+			id: connectId,
+			secret: connectSecret,
+			instanceId: *connectInstanceId,
+			queue: *connectQueue,
+			region: *connectRegion,
+		}
+	} else {
+		log.Printf("warning: Amazon Connect credentials not provided")
+	}
+
 	if cfg.PostgresAddress == "" {
 		panic("option required: database")
 	}
@@ -117,6 +148,8 @@ func main() {
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
+	externalMux.HandleFunc("/metrics", cfg.handleMetrics)
+	externalMux.HandleFunc("/session/update", cfg.handleSessionUpdate)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 	externalMux.HandleFunc("/agent-feed", cfg.handleAgentFeed)
 

@@ -13,9 +13,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+    <link rel="stylesheet" href="./lib.scss">
     <script src="./lib.mjs"></script>
+
     <script>
-        window.BACKEND_URL = process.env.BACKEND_URL;
+        window.BACKEND_HOST = process.env.BACKEND_HOST;
         window.PURPOSE = process.env.PURPOSE;
     </script>
 </head>
@@ -31,7 +33,7 @@
         </div>
         <div class="card-action">
             <button class="waves-effect waves-light btn"
-                onClick="veiligBellen.start({ url: window.BACKEND_URL, purpose: window.PURPOSE})">
+                onClick="veiligBellen.start({ hostname: window.BACKEND_HOST, purpose: window.PURPOSE })">
                 Place your call!
                 <i class="material-icons right">call</i>
             </button>

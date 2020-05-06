@@ -8,7 +8,6 @@ import "fmt"
 import "io"
 import "log"
 import "net/http"
-import "time"
 import "regexp"
 
 import "github.com/gorilla/websocket"
@@ -19,9 +18,9 @@ type DTMF = string
 type Secret = string
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  4096,
-	WriteBufferSize: 4096,
-	// TODO: check origin header
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	// Accept any origin
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
@@ -30,6 +29,7 @@ var irmaExternalURLRegexp *regexp.Regexp = regexp.MustCompile(`^http(s?)://(.*)/
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
 	Phonenumber string   `json:"phonenumber,omitempty"`
+	Dtmf        string   `json:"dtmf,omitempty"`
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
@@ -98,6 +98,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	var session SessionResponse
 	session.SessionPtr = pkg.SessionPtr
 	session.Phonenumber = cfg.phonenumber(dtmf)
+	session.Dtmf = dtmf
 
 	if cfg.IrmaExternalURL != "" {
 		// Rewrite IRMA server url to match irma-external-url arg
@@ -123,16 +124,14 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // database. This can be in case the attributes were requested but not yet
 // stored in the database in order to also retrieve them immediately.
 func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
-	// TODO: Should detect failure cases that can't be recovered from and abort.
 	irmaStatus := make(chan string)
 	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
 
 	var status string
 	for status = range irmaStatus {
-		if status == "INITIALIZED" || status == "CONNECTED" {
-			time.Sleep(time.Second)
+		if status == "IRMA-INITIALIZED" || status == "IRMA-CONNECTED" {
 			continue
-		} else if status == "DONE" {
+		} else if status == "IRMA-DONE" {
 			break
 		} else {
 			return ""
@@ -173,8 +172,6 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
-	irmaStatus := make(chan string)
-
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("failed to upgrade session status connection:", err)
@@ -183,12 +180,19 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	defer ws.Close()
 
-	sessionToken := r.FormValue("token")
-	if sessionToken == "" {
-		http.Error(w, "No token passed", http.StatusBadRequest)
+	dtmf := r.FormValue("dtmf")
+	if dtmf == "" {
+		http.Error(w, "No dtmf passed", http.StatusBadRequest)
 		return
 	}
 
+	sessionToken, err := cfg.db.secretFromDTMF(dtmf)
+	if err != nil {
+		log.Printf("failed to retrieve secret from dtmf: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
+
+	irmaStatus := make(chan string)
 	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
 
 	for status := range irmaStatus {
@@ -218,6 +222,8 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	} else {
 		io.WriteString(w, secret)
+		cfg.irmaPoll.tryNotify(secret, "CALLED")
+		log.Printf("someone called %v", secret)
 	}
 }
 
@@ -248,9 +254,6 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	} else if disclosed == "" {
-		// disclosed not set yet
-		// TODO We want to poll the IRMA server here, but we need the IRMA
-		// session token.
 		log.Printf("disclosed attributes not yet received")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
@@ -262,6 +265,32 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		Disclosed: json.RawMessage([]byte(disclosed)),
 	}
 	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("failed to marshal disclose response: %#v", response)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseJSON)
+}
+
+func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
+	secret := r.FormValue("secret")
+	status := r.FormValue("status")
+	cfg.irmaPoll.tryNotify(secret, status)
+}
+
+func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	response, err := cfg.getConnectCurrentMetrics()
+
+	if err != nil {
+		log.Printf("failed to fetch metrics: %#v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	responseJSON, err := json.Marshal(response)
+
 	if err != nil {
 		log.Printf("failed to marshal disclose response: %#v", response)
 		http.Error(w, "internal server error", http.StatusInternalServerError)

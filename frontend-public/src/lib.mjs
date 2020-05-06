@@ -1,24 +1,27 @@
 import "babel-polyfill";
-import axios from 'axios';
-import qrcode from 'qrcode-terminal';
-import { handleSession } from '@privacybydesign/irmajs';
+import { render, h } from 'preact';
+import App from './components/App';
 
 const veiligBellen = {
-    start: async ({ url, purpose }) => {
-        // TODO better error handling
-        const response = await axios.get(`${url}/session`, { params: { purpose } });
-        
-        if (response.status !== 200) {
-            console.error(response.statusCode);
+    activeElement: null,
+    start: async ({ hostname, purpose }) => {
+        if (veiligBellen.activeElement !== null) {
+            console.error('Element is still active');
             return;
         }
 
-        const { sessionPtr, phonenumber } = response.data;
+        veiligBellen.activeElement = document.createElement('div');
+        veiligBellen.activeElement.setAttribute('class', 'irma-veilig-bellen-body');
+        document.body.appendChild(veiligBellen.activeElement);
 
-        await handleSession(sessionPtr);
-
-        console.log(`Please place a call now to: ${phonenumber}`);
-        qrcode.generate(`tel:${phonenumber}`);
+        render(<App
+            onClose={() => {
+                document.body.removeChild(veiligBellen.activeElement);
+                veiligBellen.activeElement = null;
+            }}
+            hostname={hostname}
+            purpose={purpose}
+        />, veiligBellen.activeElement);
     },
 };
 

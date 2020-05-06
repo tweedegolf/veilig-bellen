@@ -1,0 +1,25 @@
+.irma-veilig-bellen-body {
+    position: fixed;
+    z-index: 1999;
+
+    background-color: rgba(#000000, 0.6);
+
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .dialog {
+        background-color: blue;
+        color: white;
+        max-width: 50vw;
+        padding: 1vw;
+
+        .phonenumber-qrcode {
+            width: 20vw;
+            height: 20vw;
+            background-color: gray;
+        }
+    }
+}
