@@ -133,7 +133,7 @@ func main() {
 	if cfg.PurposeToAttributes == nil {
 		panic("option required: purpose-map")
 	}
-	if cfg.IrmaHeaderValue != "" && cfg.IrmaHeaderKey == "" {
+	if cfg.IrmaHeaderKey != "" && cfg.IrmaHeaderValue == "" {
 		panic("irma-header-value is required when setting irma-header-key")
 	}
 
