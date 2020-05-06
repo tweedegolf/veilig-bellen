@@ -47,7 +47,7 @@ const Panel = () => {
                 <CircularProgress color="inherit" />
                 <Typography variant="h4" component="h1" gutterBottom className={classes.connectMsg}>
                     Connecting to server...
-                    </Typography>
+                </Typography>
             </Backdrop>
         );
     }
