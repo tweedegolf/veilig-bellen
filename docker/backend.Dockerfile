@@ -27,6 +27,6 @@ ENV GOPATH=/go
 RUN mkdir -p $GOPATH
 RUN chown $USER_ID:$GROUP_ID $GOPATH
 
-COPY ./docker/certificates/server.pem /etc/ssl/certs
+COPY ./certificates/server.pem /etc/ssl/certs
 
 WORKDIR $GOPATH/src
