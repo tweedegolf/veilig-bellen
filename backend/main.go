@@ -157,6 +157,7 @@ func main() {
 
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
+	go adoptDaemon(cfg)
 	go expireDaemon(cfg)
 	go notifyDaemon(cfg)
 

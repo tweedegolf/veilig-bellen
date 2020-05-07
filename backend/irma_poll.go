@@ -14,14 +14,6 @@ import (
 // database.
 func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
 	var status string
-	status, err := cfg.db.getStatus(sessionToken)
-	if err != nil {
-		log.Printf("failed to get session status from database: %v", err)
-		return
-	} else if IrmaStatusIsFinal(status) {
-		return
-	}
-
 	ticker := time.NewTicker(time.Second)
 	transport := irma.NewHTTPTransport(
 		fmt.Sprintf("%s/session/%s/", cfg.IrmaServerURL, sessionToken))
@@ -53,7 +45,7 @@ func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
 
 			// Store disclosed attributes in database
 			// *before* DONE notification
-			if new_status == "DONE" {
+			if new_status == "IRMA-DONE" {
 				cfg.cacheDisclosedAttributes(sessionToken)
 			}
 
@@ -64,6 +56,7 @@ func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
 
 			status = new_status
 			if IrmaStatusIsFinal(status) {
+				cfg.db.DeleteFeed(sessionToken)
 				return
 			}
 		}
@@ -73,5 +66,5 @@ func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
 // Decides whether we should stop polling based on a returned
 // irma status message
 func IrmaStatusIsFinal(status string) bool {
-	return status != "IRMA-INITIALIZED" && status != "IRMA-CONNECTED"
+	return status != "" && status != "IRMA-INITIALIZED" && status != "IRMA-CONNECTED"
 }

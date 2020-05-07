@@ -33,7 +33,7 @@ func (db Database) NewSession(purpose string) (DTMF, error) {
 			return "", err
 		}
 
-		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, $3, DEFAULT, DEFAULT, DEFAULT)", dtmf, db.backendIdentity, purpose)
+		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, DEFAULT, DEFAULT, DEFAULT)", dtmf, purpose)
 		pqErr, ok := err.(*pq.Error)
 		if ok && pqErr.Code.Name() == "unique_violation" {
 			time.Sleep(100 * time.Millisecond)
@@ -72,11 +72,17 @@ func (db Database) setStatus(secret string, status string) error {
 	return err
 }
 
+var emptyString = ""
+
 func (db Database) getStatus(secret string) (string, error) {
-	var status string
+	var status *string
 	row := db.db.QueryRow("SELECT status FROM sessions WHERE secret = $1", secret)
 	err := row.Scan(&status)
-	return status, err
+	if status == nil {
+		return "", err
+	} else {
+		return *status, err
+	}
 }
 
 func (db Database) getDisclosed(secret string) (purpose string, disclosed string, err error) {
@@ -145,6 +151,11 @@ func (db Database) Notify(channel, key, value string) error {
 
 func (db Database) NewFeed(feed_id string) error {
 	_, err := db.db.Exec("INSERT INTO feeds VALUES ($1, $2, now())", feed_id, db.backendIdentity)
+	return err
+}
+
+func (db Database) DeleteFeed(feed_id string) error {
+	_, err := db.db.Exec("DELETE FROM feeds WHERE feed_id = $1", feed_id)
 	return err
 }
 
