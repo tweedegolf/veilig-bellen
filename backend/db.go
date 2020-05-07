@@ -105,39 +105,34 @@ func (db Database) expire() error {
 	return err
 }
 
-// Check the database for any orphaned sessions (caretaker not making progress
-// in the last three seconds) and adopt some of them. Return the secrets
-// identifying the adopted sessions. Also send a notification for each secret
-// with an updated value for its backend_id. Should be called immediately after
-// Keepalive to prevent it from adopting orphans from itself.
+// Check the database for any orphaned feeds (caretaker not making progress in
+// the last three seconds) and adopt some of them. Return the feed_ids
+// identifying the adopted feeds.
 func (db Database) AdoptOrphans() ([]string, error) {
-	// The current implementation adopts all orphaned sessions.
+	// The current implementation adopts all orphaned feeds.
 	rows, err := db.db.Query(`
-		UPDATE sessions
-		SET backend_id = $1
-		FROM backends
-		WHERE sessions.backend_id = backends.backend_id
-		AND backends.last_seen < (now() - interval '3 seconds')
-		AND backends.backend_id != $1
-		RETURNING sessions.secret`,
-		db.backendIdentity)
+		UPDATE feeds
+		SET backend_id = $1, last_polled = now()
+		WHERE backend_id != $1
+		AND last_polled < (now() - interval '3 seconds')
+		RETURNING feed_id
+		`, db.backendIdentity)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var secrets []string
+	var feeds []string
 	for rows.Next() {
-		var secret string
-		err := rows.Scan(&secret)
+		var feed string
+		err := rows.Scan(&feed)
 		if err != nil {
 			return nil, err
 		}
-		secrets = append(secrets, secret)
-		db.Notify(secret, "backend_id", db.backendIdentity)
+		feeds = append(feeds, feed)
 	}
 
-	return secrets, nil
+	return feeds, nil
 }
 
 func (db Database) Notify(channel, key, value string) error {
@@ -148,13 +143,25 @@ func (db Database) Notify(channel, key, value string) error {
 	return err
 }
 
-// Inform cluster that this node is still up. Should be called from the main
-// action loop such that it is not called when no progress is being made.
-func (db Database) Keepalive() error {
-	_, err := db.db.Exec(`
-		INSERT INTO backends (backend_id, last_seen)
-		VALUES ($1, now())
-		ON CONFLICT (backend_id) DO UPDATE
-			SET last_seen = now()`, db.backendIdentity)
+func (db Database) NewFeed(feed_id string) error {
+	_, err := db.db.Exec("INSERT INTO feeds VALUES ($1, $2, now())", feed_id, db.backendIdentity)
 	return err
+}
+
+// Tells the database a feed is still being polled. Returns true if the current
+// backend is still responsible for polling the feed.
+func (db Database) TouchFeed(feed_id string) (bool, error) {
+	result, err := db.db.Exec(`
+		UPDATE feeds
+		SET last_polled = now()
+		WHERE feed_id = $1
+		AND backend_id = $2`, feed_id, db.backendIdentity)
+	if err != nil {
+		return false, err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected > 0, nil
 }

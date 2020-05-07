@@ -153,12 +153,6 @@ func main() {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 
-	// Ping the database to mark this backend as available.
-	err = cfg.db.Keepalive()
-	if err != nil {
-		panic(fmt.Errorf("could not connect to database: %w", err))
-	}
-
 	cfg.broadcaster = makeBroadcaster()
 
 	// TODO: Fail immediately if configured Irma server
@@ -174,6 +168,7 @@ func main() {
 			queue:      *connectQueue,
 			region:     *connectRegion,
 		}
+		cfg.db.NewFeed("kcc")
 		go connectPollDaemon(cfg)
 	} else {
 		log.Printf("warning: Amazon Connect credentials not provided")
@@ -204,6 +199,25 @@ func main() {
 		Handler: externalMux,
 	}
 	externalServer.ListenAndServe()
+}
+
+func adoptDaemon(cfg Configuration) {
+	ticker := time.NewTicker(time.Second)
+	for range ticker.C {
+		feeds, err := cfg.db.AdoptOrphans()
+		if err != nil {
+			log.Printf("failed to adopt orphans: %v", err)
+			continue
+		}
+
+		for _, feed := range feeds {
+			if feed == "kcc" {
+				go connectPollDaemon(cfg)
+			} else {
+				go cfg.pollIrmaSessionDaemon(feed)
+			}
+		}
+	}
 }
 
 func expireDaemon(cfg Configuration) {

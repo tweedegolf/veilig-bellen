@@ -127,6 +127,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cfg.db.NewFeed(pkg.Token)
 	go cfg.pollIrmaSessionDaemon(pkg.Token)
 	w.Write(sessionJSON)
 }
@@ -310,7 +311,7 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	responseJSON, err := json.Marshal(response)
 
 	if err != nil {
-		log.Printf("failed to marshal disclose response: %#v", response)
+		log.Printf("failed to marshal amazon connect metrics: %#v", response)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}

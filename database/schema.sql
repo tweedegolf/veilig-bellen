@@ -1,9 +1,3 @@
-CREATE TABLE backends (
-	-- Identifies the backend node.
-	backend_id text PRIMARY KEY,
-	-- The last moment the backend reported having made progress.
-	last_seen timestamp NOT NULL DEFAULT now());
-
 -- Each session corresponds to a single IRMA session and is identified by the
 -- session secret, or by the DTMF code before the session secret is available.
 CREATE TABLE sessions (
@@ -12,8 +6,6 @@ CREATE TABLE sessions (
 	secret text,
 	-- DTMF code used to connect the corresponding call.
 	dtmf text UNIQUE NOT NULL,
-	-- Identity of the backend responsible for any polling needs.
-	backend_id text REFERENCES backends,
 	-- Identifier for the call purpose of this session.
 	purpose text,
 	-- The IRMA attributes that were disclosed.
@@ -22,3 +14,13 @@ CREATE TABLE sessions (
 	status text,
 	-- The moment this session was created.
 	created timestamp NOT NULL DEFAULT now());
+
+-- Each row defines the backend responsible for polling a single feed.
+CREATE TABLE feeds (
+	-- Identity of the feed to be polled and the name of the corresponding
+	-- postgres channel: "kcc" or a session secret.
+	feed_id text PRIMARY KEY,
+	-- Identity of the backend responsible for polling.
+	backend_id text,
+	-- When the last poll was started.
+	last_polled timestamp NOT NULL DEFAULT now());

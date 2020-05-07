@@ -13,27 +13,33 @@ import (
 // When the IRMA session finishes, we store the disclosed attributes in the
 // database.
 func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
-	sessionUpdates := make(chan Message, 2)
-	cfg.broadcaster.Subscribe(sessionToken, sessionUpdates)
-	defer cfg.broadcaster.Unsubscribe(sessionToken, sessionUpdates)
-
 	var status string
+	status, err := cfg.db.getStatus(sessionToken)
+	if err != nil {
+		log.Printf("failed to get session status from database: %v", err)
+		return
+	} else if IrmaStatusIsFinal(status) {
+		return
+	}
+
 	ticker := time.NewTicker(time.Second)
 	transport := irma.NewHTTPTransport(
 		fmt.Sprintf("%s/session/%s/", cfg.IrmaServerURL, sessionToken))
 
 	for {
 		select {
-		case update := <-sessionUpdates:
-			if update.Key == "backend_id" && update.Value != cfg.db.backendIdentity {
-				// Polling responsibility was taken by another
-				// backend.
+		case <-ticker.C:
+			ours, err := cfg.db.TouchFeed(sessionToken)
+			if err != nil {
+				log.Printf("failed to update feed in database: %v", err)
+				return
+			} else if !ours {
+				// This feed is no longer our responsibility.
 				return
 			}
 
-		case <-ticker.C:
 			var new_status string
-			err := transport.Get("status", &new_status)
+			err = transport.Get("status", &new_status)
 			if err != nil {
 				log.Printf("failed to get irma session status: %v", err)
 				new_status = "UNREACHABLE"
