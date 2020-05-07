@@ -169,8 +169,10 @@ func main() {
 			queue:      *connectQueue,
 			region:     *connectRegion,
 		}
+		// This is expected to fail for every backend but the first to
+		// call it because the feed will already exist. We leave it to
+		// the adoptDaemon to start the connectPollDaemon.
 		cfg.db.NewFeed("kcc")
-		go connectPollDaemon(cfg)
 	} else {
 		log.Printf("warning: Amazon Connect credentials not provided")
 	}
@@ -213,7 +215,12 @@ func adoptDaemon(cfg Configuration) {
 
 		for _, feed := range feeds {
 			if feed == "kcc" {
-				go connectPollDaemon(cfg)
+				if cfg.connect.id != "" && cfg.connect.secret != "" {
+					go connectPollDaemon(cfg)
+				} else {
+					// Secret not available, disabling feed.
+					cfg.db.DeleteFeed("kcc")
+				}
 			} else {
 				go cfg.pollIrmaSessionDaemon(feed)
 			}
