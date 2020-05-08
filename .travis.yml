@@ -1,0 +1,16 @@
+language: go
+services:
+  - docker
+script:
+  - docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh `id -u` `id -g`"
+if: branch = master
+
+deploy:
+  provider: releases
+  api_key:
+    secure: YOUR_API_KEY_ENCRYPTED
+  file_glob: true
+  file: build/*
+  skip_cleanup: true
+  on:
+    tags: true
