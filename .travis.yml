@@ -1,16 +1,18 @@
-language: go
 services:
-  - docker
+- docker
 script:
-  - docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh `id -u` `id -g`"
-if: branch = master
+- docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh `id -u` `id -g`"
+- ls -aR build || true
 
 deploy:
   provider: releases
   api_key:
-    secure: YOUR_API_KEY_ENCRYPTED
+    secure: TODO
+  file:
+  - "./build/frontend_public/frontend_public.js"
+  - "./build/backend/backend-image.tar.gz"
   file_glob: true
-  file: build/*
-  skip_cleanup: true
   on:
+    repo: tweedegolf/irma-call
     tags: true
+  skip_cleanup: 'true'
