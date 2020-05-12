@@ -16,7 +16,7 @@ func (cfg Configuration) pollIrmaSessionDaemon(sessionToken string) {
 	var status string
 	ticker := time.NewTicker(time.Second)
 	transport := irma.NewHTTPTransport(
-		fmt.Sprintf("%s/session/%s/", cfg.IrmaServerURL, sessionToken))
+		fmt.Sprintf("%s/session/%s/", cfg.IrmaServer, sessionToken))
 
 	for {
 		select {

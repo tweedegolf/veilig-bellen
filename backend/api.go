@@ -35,11 +35,11 @@ type SessionResponse struct {
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
-	return cfg.ServicePhoneNumber + "," + dtmf
+	return cfg.PhoneNumber + "," + dtmf
 }
 
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
-	condiscon, ok := cfg.PurposeToAttributes[purpose]
+	condiscon, ok := cfg.PurposeMap[purpose]
 	if !ok {
 		return nil, fmt.Errorf("unknown call purpose: %#v", purpose)
 	}
@@ -55,6 +55,22 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 	return request, nil
 }
 
+func setDefaultHeaders(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+}
+
+// Check if the service is still healty and yield 200 OK if so.
+func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
+	_, err := cfg.db.activeSessionCount()
+
+	if err != nil {
+		http.Error(w, "503 upstream down", http.StatusServiceUnavailable)
+		return
+	}
+
+	io.WriteString(w, "200 OK")
+}
+
 // A citizen pressed the call with Irma button on a page on the Gemeente
 // Nijmegen website in order to start a new calling Irma session. The citizen
 // frontend makes a POST request to the backend with only one piece of
@@ -64,6 +80,8 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 // object with a valid Irma session response with a tel return url containing
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	// This function is responsible for ensuring the irma session secret is
 	// stored in the database before it returns the QR code to the user.
 	purpose := r.FormValue("purpose")
@@ -81,7 +99,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transport := irma.NewHTTPTransport(cfg.IrmaServerURL)
+	transport := irma.NewHTTPTransport(cfg.IrmaServer)
 
 	if cfg.IrmaHeaderValue != "" {
 		var headerKey string
@@ -135,7 +153,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 // Should be called when the session status becomes DONE.
 func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
 	transport := irma.NewHTTPTransport(
-		fmt.Sprintf("%s/session/%s/", cfg.IrmaServerURL, sessionToken))
+		fmt.Sprintf("%s/session/%s/", cfg.IrmaServer, sessionToken))
 
 	result := &server.SessionResult{}
 	err := transport.Get("result", result)
@@ -168,6 +186,8 @@ func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	dtmf := r.FormValue("dtmf")
 	if dtmf == "" {
 		http.Error(w, "No dtmf passed", http.StatusBadRequest)
@@ -255,6 +275,8 @@ type DiscloseResponse struct {
 // attributes are not yet available, we synchronously poll the IRMA server to
 // get them.
 func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	secret := r.FormValue("secret")
 	if secret == "" {
 		http.Error(w, "disclosure needs secret", http.StatusBadRequest)
@@ -294,12 +316,16 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	secret := r.FormValue("secret")
 	status := r.FormValue("status")
 	cfg.db.setStatus(secret, status)
 }
 
 func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	response, err := cfg.getConnectCurrentMetrics()
 
 	if err != nil {
@@ -323,6 +349,8 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.
 func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	waitListStatus := make(chan Message, 2)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
