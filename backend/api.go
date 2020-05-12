@@ -3,16 +3,18 @@ package main
 // Note: Although most API calls specify their intended HTTP method, they
 // currently accept every HTTP method.
 
-import "encoding/json"
-import "fmt"
-import "io"
-import "log"
-import "net/http"
-import "regexp"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"regexp"
 
-import "github.com/gorilla/websocket"
-import "github.com/privacybydesign/irmago"
-import "github.com/privacybydesign/irmago/server"
+	"github.com/gorilla/websocket"
+	irma "github.com/privacybydesign/irmago"
+	"github.com/privacybydesign/irmago/server"
+)
 
 type DTMF = string
 type Secret = string
@@ -118,7 +120,6 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update the request server URL to include the session token.
-	transport.Server += fmt.Sprintf("session/%s/", pkg.Token)
 	sessionJSON, err := json.Marshal(session)
 	if err != nil {
 		log.Printf("failed to marshal QR code: %v", err)
@@ -126,71 +127,47 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go cfg.waitForIrmaSession(transport, pkg.Token)
+	cfg.db.NewFeed(pkg.Token)
+	go cfg.pollIrmaSessionDaemon(pkg.Token)
 	w.Write(sessionJSON)
 }
 
-// A citizen has started an IRMA session and we're waiting for them to finish.
-// This function returns the disclosed attributes that were also stored in the
-// database. This can be in case the attributes were requested but not yet
-// stored in the database in order to also retrieve them immediately.
-func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessionToken string) string {
-	irmaStatus := make(chan string)
-	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
+// Should be called when the session status becomes DONE.
+func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
+	transport := irma.NewHTTPTransport(
+		fmt.Sprintf("%s/session/%s/", cfg.IrmaServerURL, sessionToken))
 
-	var status string
-	for status = range irmaStatus {
-		if status == "IRMA-INITIALIZED" || status == "IRMA-CONNECTED" {
-			continue
-		} else if status == "IRMA-DONE" {
-			break
-		} else {
-			return ""
-		}
-	}
-
-	// At this point, the IRMA session is done.
 	result := &server.SessionResult{}
 	err := transport.Get("result", result)
 	if err != nil {
 		log.Printf("failed to get irma session result: %v", err)
-		return ""
+		return
 	}
 
-	status = string(result.Status)
+	status := string(result.Status)
 	if status != "DONE" {
 		log.Printf("unexpected irma session status: %#v", status)
-		return ""
+		return
 	}
 
 	disclosedData := result.Disclosed
 	disclosedJSON, err := json.Marshal(disclosedData)
 	if err != nil {
 		log.Printf("failed to marshal disclosed attributes: %v", err)
-		return ""
+		return
 	}
 
 	disclosed := string(disclosedJSON)
 	err = cfg.db.storeDisclosed(sessionToken, disclosed)
 	if err != nil {
 		log.Printf("failed to store disclosed attributes: %v", err)
-		return disclosed
+		return
 	}
-
-	return disclosed
 }
 
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("failed to upgrade session status connection:", err)
-		return
-	}
-
-	defer ws.Close()
-
 	dtmf := r.FormValue("dtmf")
 	if dtmf == "" {
 		http.Error(w, "No dtmf passed", http.StatusBadRequest)
@@ -198,20 +175,49 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 	}
 
 	sessionToken, err := cfg.db.secretFromDTMF(dtmf)
-	if err != nil {
+	if err == ErrNoRows {
+		http.Error(w, "session not found", http.StatusNotFound)
+	} else if err != nil {
 		log.Printf("failed to retrieve secret from dtmf: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 
-	irmaStatus := make(chan string)
-	cfg.irmaPoll.createIrmaListener(sessionToken, irmaStatus)
+	statusUpdates := make(chan Message, 2)
+	cfg.broadcaster.Subscribe(sessionToken, statusUpdates)
+	defer cfg.broadcaster.Unsubscribe(sessionToken, statusUpdates)
 
-	for status := range irmaStatus {
-		msg := []byte(status)
+	status, err := cfg.db.getStatus(sessionToken)
+	if err != nil {
+		http.Error(w, "unknown token", http.StatusNotFound)
+		return
+	}
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("failed to upgrade session status connection:", err)
+		return
+	}
+	defer ws.Close()
+
+	err = ws.WriteMessage(websocket.TextMessage, []byte(status))
+	if err != nil {
+		log.Printf("failed to write session status on fresh websocket: %v", err)
+		return
+	}
+
+	for status := range statusUpdates {
+		if status.Key != "status" {
+			continue
+		}
+
+		msg := []byte(status.Value)
 		err = ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
-			log.Println("failed to write session status:", err)
-			break
+			// Write error after write has succeeded before,
+			// the client probably disconnected.
+			return
+		} else if IrmaStatusIsFinal(status.Value) {
+			return
 		}
 	}
 }
@@ -222,7 +228,8 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 // We respond with a fresh secret that will be placed as metadata in the call by
 // the lambda. The secret can later be used by the agent frontend to receive the
 // disclosed Irma attributes.
-// TODO: This needs authentication.
+// This handler should only be exposed on an internal port, reachable from the
+// related Amazon Lambda but not from the internet.
 func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	dtmf := r.FormValue("dtmf")
 	secret, err := cfg.db.secretFromDTMF(dtmf)
@@ -233,7 +240,7 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	} else {
 		io.WriteString(w, secret)
-		cfg.irmaPoll.tryNotify(secret, "CALLED")
+		cfg.db.setStatus(secret, "CALLED")
 		log.Printf("someone called %v", secret)
 	}
 }
@@ -265,8 +272,9 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	} else if disclosed == "" {
+		// disclosed not set yet, irma session probably failed
 		log.Printf("disclosed attributes not yet received")
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "irma session failed", http.StatusUnauthorized)
 		return
 	}
 
@@ -288,7 +296,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
 	secret := r.FormValue("secret")
 	status := r.FormValue("status")
-	cfg.irmaPoll.tryNotify(secret, status)
+	cfg.db.setStatus(secret, status)
 }
 
 func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
@@ -303,7 +311,7 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	responseJSON, err := json.Marshal(response)
 
 	if err != nil {
-		log.Printf("failed to marshal disclose response: %#v", response)
+		log.Printf("failed to marshal amazon connect metrics: %#v", response)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -315,28 +323,24 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.
 func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
-	waitListStatus := make(Listener)
+	waitListStatus := make(chan Message, 2)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("failed to upgrade session status connection:", err)
 		return
 	}
-
 	defer ws.Close()
-	defer cfg.connectPoll.unregisterListener(waitListStatus, false)
-	cfg.connectPoll.registerListener(waitListStatus)
+
+	cfg.broadcaster.Subscribe("kcc", waitListStatus)
+	defer cfg.broadcaster.Unsubscribe("kcc", waitListStatus)
 
 	for update := range waitListStatus {
-		msg, err := json.Marshal(update)
-
-		if err != nil {
-			log.Printf("failed to marshal agent feed update: %#v", err)
-			return
+		if update.Key != "amazon-connect" {
+			continue
 		}
 
-		err = ws.WriteMessage(websocket.TextMessage, msg)
-
+		err = ws.WriteMessage(websocket.TextMessage, []byte(update.Value))
 		if err != nil {
 			break
 		}

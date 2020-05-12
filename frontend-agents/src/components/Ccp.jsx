@@ -2,26 +2,31 @@ import React, { useCallback } from 'react';
 
 import 'amazon-connect-streams';
 
-const Ccp = ({ setError, onContact, onConnect, onDisconnect, ccpHost }) => {
+const Ccp = ({ setError, onContact, onAgent, onConnect, onDisconnect, ccpHost }) => {
     const ccpUrl = `https://${ccpHost}/connect/ccp-v2`;
 
     const containerRef = useCallback(element => {
         if (element !== null) {
+            // Clear the localStorage to ensure that the popup is shown.
+            if (window.localStorage !== null) {
+                window.localStorage.removeItem('connectPopupManager::connect::loginPopup');
+            }
+
             connect.core.initCCP(element, {
                 ccpUrl,
-                loginPopup: false,
+                loginPopup: true,
+                loginPopupAutoClose: true,
                 softphone: {
                     allowFramedSoftphone: true,
                 }
             });
 
-            connect.core.onAuthFail(() => {
-                setError('auth_failure');
+            connect.core.eventBus.subscribe("ack_timeout", () => {
+                setError("Failed to authenticate, please log in using the popup.");
             });
 
-            connect.agent((agent) => {
-                console.log('agent', agent);
-                console.log('agent-conf', agent.getConfiguration());
+            connect.agent((_agent) => {
+                onAgent();
             });
 
             connect.contact(async (contact) => {

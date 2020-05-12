@@ -3,6 +3,7 @@ module github.com/tweedegolf/irmabellen/backend
 go 1.14
 
 require (
+	github.com/aws/aws-sdk-go v1.30.7
 	github.com/bwesterb/go-atum v1.0.3 // indirect
 	github.com/certifi/gocertifi v0.0.0-20200211180108-c7c1fbc02894 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
@@ -22,7 +23,6 @@ require (
 	github.com/timshannon/bolthold v0.0.0-20200308034358-09aaf76b2c32 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
-	github.com/aws/aws-sdk-go v1.30.7
 )
 
 replace astuart.co/go-sse => github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d

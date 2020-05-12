@@ -11,7 +11,7 @@ const veiligBellen = {
         }
 
         veiligBellen.activeElement = document.createElement('div');
-        veiligBellen.activeElement.setAttribute('class', 'irma-veilig-bellen-body');
+        veiligBellen.activeElement.setAttribute('class', 'irma-veilig-bellen-overlay');
         document.body.appendChild(veiligBellen.activeElement);
 
         render(<App
