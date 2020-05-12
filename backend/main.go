@@ -204,6 +204,7 @@ func main() {
 	log.Printf("Registered polling processes")
 
 	externalMux := http.NewServeMux()
+	externalMux.HandleFunc("/", cfg.handleStatus)
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 	externalMux.HandleFunc("/metrics", cfg.handleMetrics)

@@ -53,6 +53,18 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 	return request, nil
 }
 
+// Check if the service is still healty and yield 200 OK if so.
+func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
+	_, err := cfg.db.activeSessionCount()
+
+	if err != nil {
+		http.Error(w, "503 upstream down", http.StatusServiceUnavailable)
+		return
+	}
+
+	io.WriteString(w, "200 OK")
+}
+
 // A citizen pressed the call with Irma button on a page on the Gemeente
 // Nijmegen website in order to start a new calling Irma session. The citizen
 // frontend makes a POST request to the backend with only one piece of
