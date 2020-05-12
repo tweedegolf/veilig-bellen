@@ -1,0 +1,6 @@
+version: '3.3'
+services:
+  backend:
+    volumes:
+    - "./backend:/go/src/app:cached"
+    - "./bin/:/bin/app/:cached"
