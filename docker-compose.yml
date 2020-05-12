@@ -8,7 +8,13 @@ services:
     networks:
       - default
     ports: ["0.0.0.0:8088:8088"]
-    command: ["irma", "server", "-v", "--url", "http://${HOST_LAN_IP}:8088", "--no-auth=false", "--requestors", '{"veilig-bellen":{"auth_method":"token","key":"12345"}}']
+    command:
+      - "irma"
+      - "server"
+      - "--verbose"
+      - "--url=http://${HOST_LAN_IP}:8088"
+      - "--no-auth=false"
+      - '--requestors={"veilig-bellen":{"auth_method":"token","key":"12345"}}'
 
   nginx:
     image: nginx:1.17
