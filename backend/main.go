@@ -229,7 +229,7 @@ func main() {
 		Handler: externalMux,
 	}
 	log.Printf("Starting external HTTP server on %v", cfg.ListenAddress)
-	externalServer.ListenAndServe()
+	log.Fatal(externalServer.ListenAndServe())
 }
 
 func expireDaemon(cfg Configuration) {
