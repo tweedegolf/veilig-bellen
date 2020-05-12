@@ -3,4 +3,3 @@ services:
   backend:
     volumes:
     - "./backend:/go/src/app:cached"
-    - "./bin/:/bin/app/:cached"
