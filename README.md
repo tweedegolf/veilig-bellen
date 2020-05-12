@@ -4,10 +4,6 @@ Consisting of a Go backend, a React agent website, and a button library.
 
 ## Development workflow
 
-### Prerequisites
-- [docker-compose](https://docs.docker.com/get-docker/)
-
-
 ### To setup:
 
 ```bash
@@ -29,6 +25,9 @@ docker exec -i veilig-bellen_psql_1 psql -U tg -d tg < database/schema.sql
 bin/up.sh
 ```
 
+**Note:** in order to run with the metrics API enabled you need to create an Amazon IAM user, add the appropriate Amazon Connect roles,
+and set `CONNECT_ID` and `CONNECT_SECRET` environment variables before starting the backend.
+
 ### Manual flow
 
 1. Go to `localhost:8080/session?purpose=foo`
@@ -41,9 +40,6 @@ bin/up.sh
 5. Copy the secret it returns.
 6. Go to `localhost:8080/disclose?secret=` followed by the copied secret. The
    Irma attributes should be returned.
-
-**Note:** in order to run with the metrics API enabled you need to create an Amazon IAM user, add the appropriate Amazon Connect roles,
-and set `CONNECT_ID` and `CONNECT_SECRET` environment variables before starting the backend.
 
 ## Manual build frontends
 
