@@ -53,6 +53,10 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 	return request, nil
 }
 
+func setDefaultHeaders(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+}
+
 // Check if the service is still healty and yield 200 OK if so.
 func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 	_, err := cfg.db.activeSessionCount()
@@ -74,6 +78,8 @@ func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 // object with a valid Irma session response with a tel return url containing
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	// This function is responsible for ensuring the irma session secret is
 	// stored in the database before it returns the QR code to the user.
 	purpose := r.FormValue("purpose")
@@ -195,6 +201,8 @@ func (cfg Configuration) waitForIrmaSession(transport *irma.HTTPTransport, sessi
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("failed to upgrade session status connection:", err)
@@ -260,6 +268,8 @@ type DiscloseResponse struct {
 // attributes are not yet available, we synchronously poll the IRMA server to
 // get them.
 func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	secret := r.FormValue("secret")
 	if secret == "" {
 		http.Error(w, "disclosure needs secret", http.StatusBadRequest)
@@ -298,12 +308,16 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	secret := r.FormValue("secret")
 	status := r.FormValue("status")
 	cfg.irmaPoll.tryNotify(secret, status)
 }
 
 func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	response, err := cfg.getConnectCurrentMetrics()
 
 	if err != nil {
@@ -327,6 +341,8 @@ func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 // Upgrade connection to websocket, register a channel with the ConnectPoll,
 // pass updates to websocket.
 func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
 	waitListStatus := make(Listener)
 
 	ws, err := upgrader.Upgrade(w, r, nil)
