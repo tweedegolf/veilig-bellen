@@ -1,13 +1,13 @@
 services:
 - docker
 script:
-- docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh `id -u` `id -g`"
+- docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh
+  `id -u` `id -g`"
 - ls -aR build || true
-
 deploy:
   provider: releases
   api_key:
-    secure: TODO
+    secure: JiUQ8qPFLmFJpBd4p3tmTCAGVtf7ILGNK/6wVXNg0JMjnj1NrhGivdGb8sNwN19gwGET0G9aCpiNF6AEeVF7VoHcMeF86kFZQ9fmlU12CeCl8420JOmr13+WzycTRWXqNNZ9sAu34D/Q//8Brartf/+tDdtaVr53WuAPttxsFx7/l0zgHNF2dBmRaLhdJBRWvnxkZTfPdVnEmK6i6ciw1oigJ9xGjrReUGJ1Jxny24gDNTdIXe4mVtgtrb6JaIAQFMgq237LtJ0HYaZMs4gXcoGjvV08HvJHQfdcnfuYK0CKJw97ZkeUC8F8kSVlhxVSVcFunltvVpaS2+y2GIpY03LK+FuaYWhqHkFelJ0gthJ4spgYZeUcDK4zKfwa7jO0zUFT2LD4NR4gtTxmRMJOQK8hKSsvZpn7QoN6yl+P3X/d3tCFjIGL8OPVh+iHYIiJulyAfekm5qNDJeonuTeg46mb2LFnipZW9TRHWcgJLKSaysx6amH45pgQXt5NtMQrfBaRugx03zfOAXazxv1NC0iymaZGpThkl2nduoObttfbGJ7Oie7So0M72aDnXl22S4Jlpym/NvMdqsW9UVS5ssopimMgybXOaynOKRr36kfta3zeps0mB6c0E+CX1GA7ZKdB4AYfJpOzJop4bp1QwOezEDogl3wqXtmCIb1HDhk=
   file:
   - "./build/frontend_public/frontend_public.js"
   - "./build/backend/backend-image.tar.gz"
