@@ -97,12 +97,12 @@ const App = ({ backendUrl, ccpHost }) => {
             {error && <Alert severity="error">{error}</Alert>}
             {state.mode === 'unauthorized' && (<Alert severity="warning">You are yet unauthorized and are required to log in using the pop-up.</Alert>)}
             <Grid container spacing={2}>
-                <Grid className="contactinfo" item xs={12} md={6}>
+                <Grid className="contactinfo" item xs={6}>
+                    <Ccp {...{ setError, onContact, onConnect, onDisconnect, ccpHost }} />
+                </Grid>
+                <Grid className="contactinfo" item xs={6}>
                     <ContactInfo {...state} />
-                </Grid>
-                <Grid className="contactinfo" item xs={12} md={6}>
-                    <Ccp {...{ setError, onAgent, onContact, onConnect, onDisconnect, ccpHost }} />
-                </Grid>
+                </Grid>      
             </Grid>
         </CssBaseline>
     );
