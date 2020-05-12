@@ -18,11 +18,11 @@ import _ "github.com/lib/pq"
 const ExpireDelay = time.Hour
 
 type ConnectConfiguration struct {
-	id           string                                    `json:"id,omitempty"`
-	secret       string                                    `json:"secret,omitempty"`
-	instanceId   string                                    `json:"instance,omitempty"`
-	queue        string                                    `json:"queue,omitempty"`
-	region       string                                    `json:"region,omitempty"`
+	Id           string                                    `json:"id,omitempty"`
+	Secret       string                                    `json:"secret,omitempty"`
+	InstanceId   string                                    `json:"instance,omitempty"`
+	Queue        string                                    `json:"queue,omitempty"`
+	Region       string                                    `json:"region,omitempty"`
 }
 
 type BaseConfiguration struct {
@@ -49,7 +49,7 @@ type Configuration struct {
 	IrmaExternalURL     string
 	PhoneNumber         string
 	PurposeMap          map[string]irma.AttributeConDisCon
-	connect             ConnectConfiguration
+	Connect             ConnectConfiguration
 	db                  Database
 	irmaPoll            IrmaPoll
 	connectPoll         ConnectPoll
@@ -72,7 +72,7 @@ func resolveConfiguration(base BaseConfiguration) Configuration {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
 	}
-	cfg.connect = base.Connect
+	cfg.Connect = base.Connect
 
 	return cfg
 }
@@ -101,11 +101,6 @@ func main() {
 	err := envconfig.Process("BACKEND", &baseCfg)
 	if err != nil {
 		panic(fmt.Sprintf("could not parse environment: %v", err))
-	}
-	
-	err = envconfig.Process("BACKEND_CONNECT", &baseCfg.Connect)
-	if err != nil {
-		panic(fmt.Sprintf("could not parse environment for connect variables: %v", err))
 	}
 
 	if *configuration != "" {
@@ -151,13 +146,13 @@ func main() {
 		baseCfg.PurposeMap = *purposeMap
 	}
 	if *connectInstanceId != "" {
-		baseCfg.Connect.instanceId = *connectInstanceId
+		baseCfg.Connect.InstanceId = *connectInstanceId
 	}
 	if *connectQueue != "" {
-		baseCfg.Connect.queue = *connectQueue
+		baseCfg.Connect.Queue = *connectQueue
 	}
 	if *connectRegion != "" {
-		baseCfg.Connect.region = *connectRegion
+		baseCfg.Connect.Region = *connectRegion
 	}
 
 	cfg := resolveConfiguration(baseCfg)
@@ -180,9 +175,6 @@ func main() {
 	if cfg.IrmaHeaderKey != "" && cfg.IrmaHeaderValue == "" {
 		panic("irma-header-value is required when setting irma-header-key")
 	}
-
-	cfg_str, err := json.MarshalIndent(cfg, "", "  ")
-	log.Printf("cfg %w", string(cfg_str))
 
 	db, err := sql.Open("postgres", cfg.Database)
 	if err != nil {

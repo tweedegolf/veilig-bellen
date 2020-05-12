@@ -8,15 +8,15 @@ import "github.com/aws/aws-sdk-go/service/connect"
 func (cfg Configuration) getConnectSession() *connect.Connect {
 	mySession := session.Must(session.NewSession())
 	return connect.New(mySession, &aws.Config{
-		Region:      aws.String(cfg.connect.region),
-		Credentials: credentials.NewStaticCredentials(cfg.connect.id, cfg.connect.secret, ""),
+		Region:      aws.String(cfg.Connect.Region),
+		Credentials: credentials.NewStaticCredentials(cfg.Connect.Id, cfg.Connect.Secret, ""),
 	})
 }
 
 func (cfg Configuration) getConnectCurrentMetrics() (*connect.GetCurrentMetricDataOutput, error) {
 	svc := cfg.getConnectSession()
 
-	instanceId := cfg.connect.instanceId
+	instanceId := cfg.Connect.InstanceId
 
 	agentsOnline := "AGENTS_ONLINE"
 	agentsAvailable := "AGENTS_AVAILABLE"
@@ -24,7 +24,7 @@ func (cfg Configuration) getConnectCurrentMetrics() (*connect.GetCurrentMetricDa
 	contactsInQueue := "CONTACTS_IN_QUEUE"
 	count := "COUNT"
 
-	queue := cfg.connect.queue
+	queue := cfg.Connect.Queue
 
 	result, err := svc.GetCurrentMetricData(&connect.GetCurrentMetricDataInput{
 		InstanceId: &instanceId,
@@ -48,7 +48,7 @@ func (cfg Configuration) getConnectCurrentMetrics() (*connect.GetCurrentMetricDa
 func (cfg Configuration) listConnectQueues() (*connect.ListQueuesOutput, error) {
 	svc := cfg.getConnectSession()
 
-	instanceId := cfg.connect.instanceId
+	instanceId := cfg.Connect.InstanceId
 
 	result, err := svc.ListQueues(&connect.ListQueuesInput{
 		InstanceId: &instanceId,
