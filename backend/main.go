@@ -18,41 +18,41 @@ import _ "github.com/lib/pq"
 const ExpireDelay = time.Hour
 
 type ConnectConfiguration struct {
-	Id           string                                    `json:"id,omitempty"`
-	Secret       string                                    `json:"secret,omitempty"`
-	InstanceId   string                                    `json:"instance,omitempty"`
-	Queue        string                                    `json:"queue,omitempty"`
-	Region       string                                    `json:"region,omitempty"`
+	Id         string `json:"id,omitempty"`
+	Secret     string `json:"secret,omitempty"`
+	InstanceId string `json:"instance,omitempty"`
+	Queue      string `json:"queue,omitempty"`
+	Region     string `json:"region,omitempty"`
 }
 
 type BaseConfiguration struct {
-	Configuration       string                             `json:"configuration,omitempty"`
-	Database            string                             `json:"database,omitempty"`
-	ListenAddress       string                             `json:"listen-address,omitempty"`
-	InternalAddress     string                             `json:"internal-address,omitempty"`
-	IrmaServer          string                             `json:"irma-server,omitempty"`
-	IrmaHeaderKey       string                             `json:"irma-header-key,omitempty"`
-	IrmaHeaderValue     string                             `json:"irma-header-value,omitempty"`
-	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
-	PhoneNumber         string                             `json:"phone-number,omitempty"`
-	PurposeMap          string                             `json:"purpose-map,omitempty"`
-	Connect             ConnectConfiguration               `json:"connect,omitempty"`
+	Configuration   string               `json:"configuration,omitempty"`
+	Database        string               `json:"database,omitempty"`
+	ListenAddress   string               `json:"listen-address,omitempty"`
+	InternalAddress string               `json:"internal-address,omitempty"`
+	IrmaServer      string               `json:"irma-server,omitempty"`
+	IrmaHeaderKey   string               `json:"irma-header-key,omitempty"`
+	IrmaHeaderValue string               `json:"irma-header-value,omitempty"`
+	IrmaExternalURL string               `json:"irma-external-url,omitempty"`
+	PhoneNumber     string               `json:"phone-number,omitempty"`
+	PurposeMap      string               `json:"purpose-map,omitempty"`
+	Connect         ConnectConfiguration `json:"connect,omitempty"`
 }
 
 type Configuration struct {
-	Database            string
-	ListenAddress       string
-	InternalAddress     string
-	IrmaServer          string
-	IrmaHeaderKey       string
-	IrmaHeaderValue     string
-	IrmaExternalURL     string
-	PhoneNumber         string
-	PurposeMap          map[string]irma.AttributeConDisCon
-	Connect             ConnectConfiguration
-	db                  Database
-	irmaPoll            IrmaPoll
-	connectPoll         ConnectPoll
+	Database        string
+	ListenAddress   string
+	InternalAddress string
+	IrmaServer      string
+	IrmaHeaderKey   string
+	IrmaHeaderValue string
+	IrmaExternalURL string
+	PhoneNumber     string
+	PurposeMap      map[string]irma.AttributeConDisCon
+	Connect         ConnectConfiguration
+	db              Database
+	irmaPoll        IrmaPoll
+	connectPoll     ConnectPoll
 }
 
 func resolveConfiguration(base BaseConfiguration) Configuration {
@@ -104,7 +104,7 @@ func main() {
 	}
 
 	if *configuration != "" {
-		baseCfg.Configuration = *configuration;
+		baseCfg.Configuration = *configuration
 	}
 
 	if baseCfg.Configuration != "" {
