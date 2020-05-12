@@ -176,11 +176,15 @@ func main() {
 		panic("irma-header-value is required when setting irma-header-key")
 	}
 
+	log.Printf("Successfully parsed configuration")
+
 	db, err := sql.Open("postgres", cfg.Database)
 	if err != nil {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 	cfg.db = Database{db}
+
+	log.Printf("Connected to database")
 
 	cfg.irmaPoll = makeIrmaPoll()
 	cfg.connectPoll = makeConnectPoll()
@@ -196,6 +200,8 @@ func main() {
 	go expireDaemon(cfg)
 	go irmaPollDaemon(cfg)
 	go connectPollDaemon(cfg)
+
+	log.Printf("Registered polling processes")
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
@@ -213,6 +219,7 @@ func main() {
 			Handler: internalMux,
 		}
 		go internalServer.ListenAndServe()
+		log.Printf("Started internal HTTP server on %v", cfg.InternalAddress)
 	} else {
 		externalMux.HandleFunc("/call", cfg.handleCall)
 	}
@@ -221,6 +228,7 @@ func main() {
 		Addr:    cfg.ListenAddress,
 		Handler: externalMux,
 	}
+	log.Printf("Starting external HTTP server on %v", cfg.ListenAddress)
 	externalServer.ListenAndServe()
 }
 
