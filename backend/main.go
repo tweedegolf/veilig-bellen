@@ -23,9 +23,9 @@ const ExpireDelay = time.Hour
 
 type ConnectConfiguration struct {
 	// Amazon endpoint user identifier
-	Id         string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 	// Amazon endpoint user secret
-	Secret     string `json:"secret,omitempty"`
+	Secret string `json:"secret,omitempty"`
 	// Amazon Connect instance identifier
 	InstanceId string `json:"instance,omitempty"`
 	Queue      string `json:"queue,omitempty"`

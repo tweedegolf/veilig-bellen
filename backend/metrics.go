@@ -29,12 +29,12 @@ func (cfg Configuration) getConnectCurrentMetrics() (*connect.GetCurrentMetricDa
 	result, err := svc.GetCurrentMetricData(&connect.GetCurrentMetricDataInput{
 		InstanceId: &instanceId,
 		CurrentMetrics: []*connect.CurrentMetric{
-			&connect.CurrentMetric{ Name: &agentsOnline, Unit: &count },
-			&connect.CurrentMetric{ Name: &agentsAvailable, Unit: &count },
-			&connect.CurrentMetric{ Name: &agentsOnCall, Unit: &count },
-			&connect.CurrentMetric{ Name: &contactsInQueue, Unit: &count },
+			&connect.CurrentMetric{Name: &agentsOnline, Unit: &count},
+			&connect.CurrentMetric{Name: &agentsAvailable, Unit: &count},
+			&connect.CurrentMetric{Name: &agentsOnCall, Unit: &count},
+			&connect.CurrentMetric{Name: &contactsInQueue, Unit: &count},
 		},
-		Filters: &connect.Filters{ Queues: []*string { &queue }},
+		Filters:   &connect.Filters{Queues: []*string{&queue}},
 		Groupings: []*string{},
 	})
 
