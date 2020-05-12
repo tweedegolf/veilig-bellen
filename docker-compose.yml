@@ -46,8 +46,8 @@ services:
     user: "$USER_ID:$GROUP_ID"
     depends_on: [psql]
     volumes:
-    - "./backend:/go/src/app:cached"
-    - "./bin/:/bin/app/:cached"
+    - "./backend:/go/src/app:ro"
+    - "./bin/:/bin/app/:ro"
     command:
     - "/bin/app/watch.sh"
     - "app"

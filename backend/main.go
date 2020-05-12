@@ -1,25 +1,32 @@
 package main
 
-import "database/sql"
-import "encoding/json"
-import "fmt"
-import "io/ioutil"
-import "log"
-import "net/http"
-import "time"
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"time"
 
-import "github.com/kelseyhightower/envconfig"
-import "github.com/privacybydesign/irmago"
-import flag "github.com/spf13/pflag"
-import _ "github.com/lib/pq"
+	irma "github.com/privacybydesign/irmago"
+
+	"github.com/kelseyhightower/envconfig"
+	"github.com/lib/pq"
+	flag "github.com/spf13/pflag"
+)
 
 // Every backend node will ask the database to expire old sessions once every
 // ExpireDelay
 const ExpireDelay = time.Hour
 
 type ConnectConfiguration struct {
+	// Amazon endpoint user identifier
 	Id         string `json:"id,omitempty"`
+	// Amazon endpoint user secret
 	Secret     string `json:"secret,omitempty"`
+	// Amazon Connect instance identifier
 	InstanceId string `json:"instance,omitempty"`
 	Queue      string `json:"queue,omitempty"`
 	Region     string `json:"region,omitempty"`
@@ -51,8 +58,7 @@ type Configuration struct {
 	PurposeMap      map[string]irma.AttributeConDisCon
 	Connect         ConnectConfiguration
 	db              Database
-	irmaPoll        IrmaPoll
-	connectPoll     ConnectPoll
+	broadcaster     Broadcaster
 }
 
 func resolveConfiguration(base BaseConfiguration) Configuration {
@@ -178,16 +184,27 @@ func main() {
 
 	log.Printf("Successfully parsed configuration")
 
+	var identity string
+	hostname, err := os.Hostname()
+	if err != nil {
+		identity = fmt.Sprintf(":%v", os.Getpid())
+	} else {
+		identity = fmt.Sprintf("%v:%v", hostname, os.Getpid())
+	}
+
 	db, err := sql.Open("postgres", cfg.Database)
 	if err != nil {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
-	cfg.db = Database{db}
+	listener := pq.NewListener(cfg.Database, 100*time.Millisecond, 60*time.Second, nil)
+	cfg.db = Database{
+		db:              db,
+		listener:        listener,
+		backendIdentity: identity,
+	}
 
 	log.Printf("Connected to database")
 
-	cfg.irmaPoll = makeIrmaPoll()
-	cfg.connectPoll = makeConnectPoll()
 	// The open call may succeed because the library seems to connect to the
 	// database lazily. Expire old sessions in order to test the connection.
 	err = cfg.db.expire()
@@ -195,11 +212,22 @@ func main() {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}
 
+	cfg.broadcaster = makeBroadcaster()
+
+	if cfg.Connect.Id != "" && cfg.Connect.Secret != "" {
+		// This is expected to fail for every backend but the first to
+		// call it because the feed will already exist. We leave it to
+		// the adoptDaemon to start the connectPollDaemon.
+		cfg.db.NewFeed("kcc")
+	} else {
+		log.Printf("warning: Amazon Connect credentials not provided")
+	}
+
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
+	go adoptDaemon(cfg)
 	go expireDaemon(cfg)
-	go irmaPollDaemon(cfg)
-	go connectPollDaemon(cfg)
+	go notifyDaemon(cfg)
 
 	log.Printf("Registered polling processes")
 
@@ -231,6 +259,31 @@ func main() {
 	}
 	log.Printf("Starting external HTTP server on %v", cfg.ListenAddress)
 	log.Fatal(externalServer.ListenAndServe())
+}
+
+func adoptDaemon(cfg Configuration) {
+	ticker := time.NewTicker(time.Second)
+	for range ticker.C {
+		feeds, err := cfg.db.AdoptOrphans()
+		if err != nil {
+			log.Printf("failed to adopt orphans: %v", err)
+			continue
+		}
+
+		for _, feed := range feeds {
+			if feed == "kcc" {
+				if cfg.Connect.Id != "" && cfg.Connect.Secret != "" {
+					go connectPollDaemon(cfg)
+				} else {
+					// Secret not available, disabling feed.
+					log.Printf("no connect credentials available, disabling kcc feed")
+					cfg.db.DeleteFeed("kcc")
+				}
+			} else {
+				go cfg.pollIrmaSessionDaemon(feed)
+			}
+		}
+	}
 }
 
 func expireDaemon(cfg Configuration) {
