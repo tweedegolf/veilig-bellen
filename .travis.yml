@@ -13,6 +13,6 @@ deploy:
   - "./build/backend/backend-image.tar.gz"
   file_glob: true
   on:
-    repo: tweedegolf/irma-call
+    repo: tweedegolf/veilig-bellen
     tags: true
   skip_cleanup: 'true'
