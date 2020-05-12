@@ -33,11 +33,11 @@ type SessionResponse struct {
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
-	return cfg.ServicePhoneNumber + "," + dtmf
+	return cfg.PhoneNumber + "," + dtmf
 }
 
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
-	condiscon, ok := cfg.PurposeToAttributes[purpose]
+	condiscon, ok := cfg.PurposeMap[purpose]
 	if !ok {
 		return nil, fmt.Errorf("unknown call purpose: %#v", purpose)
 	}
@@ -79,7 +79,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transport := irma.NewHTTPTransport(cfg.IrmaServerURL)
+	transport := irma.NewHTTPTransport(cfg.IrmaServer)
 
 	if cfg.IrmaHeaderValue != "" {
 		var headerKey string

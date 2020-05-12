@@ -7,8 +7,8 @@ import "io/ioutil"
 import "log"
 import "net/http"
 import "time"
-import "os"
 
+import "github.com/kelseyhightower/envconfig"
 import "github.com/privacybydesign/irmago"
 import flag "github.com/spf13/pflag"
 import _ "github.com/lib/pq"
@@ -25,24 +25,60 @@ type ConnectConfiguration struct {
 	region       string                                    `json:"region,omitempty"`
 }
 
-type Configuration struct {
-	PostgresAddress     string                             `json:"database,omitempty"`
+type BaseConfiguration struct {
+	Configuration       string                             `json:"configuration,omitempty"`
+	Database            string                             `json:"database,omitempty"`
 	ListenAddress       string                             `json:"listen-address,omitempty"`
 	InternalAddress     string                             `json:"internal-address,omitempty"`
-	IrmaServerURL       string                             `json:"irma-server,omitempty"`
+	IrmaServer          string                             `json:"irma-server,omitempty"`
 	IrmaHeaderKey       string                             `json:"irma-header-key,omitempty"`
 	IrmaHeaderValue     string                             `json:"irma-header-value,omitempty"`
 	IrmaExternalURL     string                             `json:"irma-external-url,omitempty"`
-	ServicePhoneNumber  string                             `json:"phone-number,omitempty"`
-	PurposeToAttributes map[string]irma.AttributeConDisCon `json:"purpose-map,omitempty"`
+	PhoneNumber         string                             `json:"phone-number,omitempty"`
+	PurposeMap          string                             `json:"purpose-map,omitempty"`
+	Connect             ConnectConfiguration               `json:"connect,omitempty"`
+}
+
+type Configuration struct {
+	Database            string
+	ListenAddress       string
+	InternalAddress     string
+	IrmaServer          string
+	IrmaHeaderKey       string
+	IrmaHeaderValue     string
+	IrmaExternalURL     string
+	PhoneNumber         string
+	PurposeMap          map[string]irma.AttributeConDisCon
 	connect             ConnectConfiguration
 	db                  Database
 	irmaPoll            IrmaPoll
 	connectPoll         ConnectPoll
 }
 
-func main() {
+func resolveConfiguration(base BaseConfiguration) Configuration {
 	var cfg Configuration
+
+	cfg.Database = base.Database
+	cfg.ListenAddress = base.ListenAddress
+	cfg.InternalAddress = base.InternalAddress
+	cfg.IrmaServer = base.IrmaServer
+	cfg.IrmaHeaderKey = base.IrmaHeaderKey
+	cfg.IrmaHeaderValue = base.IrmaHeaderValue
+	cfg.IrmaExternalURL = base.IrmaExternalURL
+	cfg.PhoneNumber = base.PhoneNumber
+	if base.PurposeMap != "" {
+		err := json.Unmarshal([]byte(base.PurposeMap), &cfg.PurposeMap)
+		if err != nil {
+			panic(fmt.Sprintf("could not parse purpose map: %v", err))
+		}
+	}
+	cfg.connect = base.Connect
+
+	return cfg
+}
+
+func main() {
+	var baseCfg BaseConfiguration
 
 	configuration := flag.StringP("config", "c", "", `The file to read configuration from. Further options override.`)
 	database := flag.String("database", "", `The address of the PostgreSQL database used for persistence and robustness.`)
@@ -55,89 +91,100 @@ func main() {
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
 
-	connectId := os.Getenv("CONNECT_ID") // Amazon endpoint user identifier
-	connectSecret := os.Getenv("CONNECT_SECRET") // Amazon endpoint user secret
-
+	// Note: we do not provide the option to set the ID & Secret using CLI.
 	connectInstanceId := flag.String("connect-instance-id", "", `Identifier of the Amazon Connect instance`)
 	connectQueue := flag.String("connect-queue", "", `Identifier of the Amazon Connect queue to show the metrics for`)
 	connectRegion := flag.String("connect-region", "", `The Amazon Connect region to use (i.e. eu-central-1)`)
 
 	flag.Parse()
 
+	err := envconfig.Process("BACKEND", &baseCfg)
+	if err != nil {
+		panic(fmt.Sprintf("could not parse environment: %v", err))
+	}
+	
+	err = envconfig.Process("BACKEND_CONNECT", &baseCfg.Connect)
+	if err != nil {
+		panic(fmt.Sprintf("could not parse environment for connect variables: %v", err))
+	}
+
 	if *configuration != "" {
-		contents, err := ioutil.ReadFile(*configuration)
+		baseCfg.Configuration = *configuration;
+	}
+
+	if baseCfg.Configuration != "" {
+		contents, err := ioutil.ReadFile(baseCfg.Configuration)
 		if err != nil {
-			panic(fmt.Sprintf("configuration file not found: %v", *configuration))
+			panic(fmt.Sprintf("configuration file not found: %v", baseCfg.Configuration))
 		}
-		err = json.Unmarshal(contents, &cfg)
+		err = json.Unmarshal(contents, &baseCfg)
 		if err != nil {
 			panic(fmt.Sprintf("could not parse configuration file: %v", err))
 		}
 	}
 
 	if *database != "" {
-		cfg.PostgresAddress = *database
+		baseCfg.Database = *database
 	}
 	if *listenAddress != "" {
-		cfg.ListenAddress = *listenAddress
+		baseCfg.ListenAddress = *listenAddress
 	}
 	if *internalAddress != "" {
-		cfg.InternalAddress = *internalAddress
+		baseCfg.InternalAddress = *internalAddress
 	}
 	if *irmaServer != "" {
-		cfg.IrmaServerURL = *irmaServer
+		baseCfg.IrmaServer = *irmaServer
 	}
 	if *irmaHeaderKey != "" {
-		cfg.IrmaHeaderKey = *irmaHeaderKey
+		baseCfg.IrmaHeaderKey = *irmaHeaderKey
 	}
 	if *irmaHeaderValue != "" {
-		cfg.IrmaHeaderValue = *irmaHeaderValue
+		baseCfg.IrmaHeaderValue = *irmaHeaderValue
 	}
 	if *irmaExternalURL != "" {
-		cfg.IrmaExternalURL = *irmaExternalURL
+		baseCfg.IrmaExternalURL = *irmaExternalURL
 	}
 	if *phoneNumber != "" {
-		cfg.ServicePhoneNumber = *phoneNumber
+		baseCfg.PhoneNumber = *phoneNumber
 	}
 	if *purposeMap != "" {
-		err := json.Unmarshal([]byte(*purposeMap), &cfg.PurposeToAttributes)
-		if err != nil {
-			panic(fmt.Sprintf("could not parse purpose map: %v", err))
-		}
+		baseCfg.PurposeMap = *purposeMap
+	}
+	if *connectInstanceId != "" {
+		baseCfg.Connect.instanceId = *connectInstanceId
+	}
+	if *connectQueue != "" {
+		baseCfg.Connect.queue = *connectQueue
+	}
+	if *connectRegion != "" {
+		baseCfg.Connect.region = *connectRegion
 	}
 
-	if connectId != "" && connectSecret != "" {
-		cfg.connect = ConnectConfiguration{
-			id: connectId,
-			secret: connectSecret,
-			instanceId: *connectInstanceId,
-			queue: *connectQueue,
-			region: *connectRegion,
-		}
-	} else {
-		log.Printf("warning: Amazon Connect credentials not provided")
-	}
+	cfg := resolveConfiguration(baseCfg)
 
-	if cfg.PostgresAddress == "" {
+	if cfg.Database == "" {
 		panic("option required: database")
 	}
 	if cfg.ListenAddress == "" {
 		panic("option required: listen-address")
 	}
-	if cfg.IrmaServerURL == "" {
+	if cfg.IrmaServer == "" {
 		panic("option required: irma-server")
 	}
-	if cfg.ServicePhoneNumber == "" {
+	if cfg.PhoneNumber == "" {
 		panic("option required: phone-number")
 	}
-	if cfg.PurposeToAttributes == nil {
+	if cfg.PurposeMap == nil {
 		panic("option required: purpose-map")
 	}
 	if cfg.IrmaHeaderKey != "" && cfg.IrmaHeaderValue == "" {
 		panic("irma-header-value is required when setting irma-header-key")
 	}
 
-	db, err := sql.Open("postgres", cfg.PostgresAddress)
+	cfg_str, err := json.MarshalIndent(cfg, "", "  ")
+	log.Printf("cfg %w", string(cfg_str))
+
+	db, err := sql.Open("postgres", cfg.Database)
 	if err != nil {
 		panic(fmt.Errorf("could not connect to database: %w", err))
 	}

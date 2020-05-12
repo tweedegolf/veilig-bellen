@@ -51,21 +51,21 @@ services:
     command:
     - "/bin/app/watch.sh"
     - "app"
-    - "--database=postgres://tg@psql:5432/tg?sslmode=disable"
-    - "--listen-address=:8080"
-    - "--irma-server=http://irma:8088"
-    - "--irma-header-key=Authorization"
-    - "--irma-header-value=12345"
-    - "--phone-number=+318000227348"
-    - '--purpose-map={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}'
-    - "--connect-instance-id=503d5d31-de38-4803-bb39-02e98ee8891c"
-    - "--connect-queue=f3860ab3-8305-4862-940e-9f6b608f9530"
-    - "--connect-region=eu-central-1"
     networks:
     - default
     environment:
-    - CONNECT_ID
-    - CONNECT_SECRET
+    - BACKEND_DATABASE=postgres://tg@psql:5432/tg?sslmode=disable
+    - BACKEND_LISTENADDRESS=:8080
+    - BACKEND_IRMASERVER=http://irma:8088
+    - BACKEND_IRMAHEADERKEY=Authorization
+    - BACKEND_IRMAHEADERVALUE=12345
+    - BACKEND_PHONENUMBER=+318000227348
+    - BACKEND_PURPOSEMAP={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}
+    - BACKEND_CONNECT_ID
+    - BACKEND_CONNECT_SECRET
+    - BACKEND_CONNECT_INSTANCEID=503d5d31-de38-4803-bb39-02e98ee8891c
+    - BACKEND_CONNECT_QUEUE=f3860ab3-8305-4862-940e-9f6b608f9530
+    - BACKEND_CONNECT_REGION=eu-central-1
     ports: ["127.0.0.1:8080:8080"]
     expose: [8080]
 

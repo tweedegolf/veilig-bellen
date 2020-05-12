@@ -23,6 +23,7 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
 	github.com/aws/aws-sdk-go v1.30.7
+	github.com/kelseyhightower/envconfig v1.4.0
 )
 
 replace astuart.co/go-sse => github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d

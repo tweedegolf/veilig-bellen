@@ -103,7 +103,7 @@ func irmaPollDaemon(cfg Configuration) {
 			for sessionToken, session := range poll.sessions {
 				// Update the request server URL to include the session token.
 				if session.shouldPollIrma() {
-					transport.Server = cfg.IrmaServerURL + fmt.Sprintf("/session/%s/", sessionToken)
+					transport.Server = cfg.IrmaServer + fmt.Sprintf("/session/%s/", sessionToken)
 					status = "IRMA-" + pollIrmaSession(transport)
 					session.tryNotify(status)
 				
