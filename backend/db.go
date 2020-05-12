@@ -1,16 +1,21 @@
 package main
 
-import "crypto/rand"
-import "database/sql"
-import "fmt"
-import "math/big"
-import "time"
-import "github.com/lib/pq"
+import (
+	"crypto/rand"
+	"database/sql"
+	"fmt"
+	"math/big"
+	"time"
+
+	"github.com/lib/pq"
+)
 
 var ErrNoRows = sql.ErrNoRows
 
 type Database struct {
-	db *sql.DB
+	db              *sql.DB
+	listener        *pq.Listener
+	backendIdentity string
 }
 
 func (db Database) NewSession(purpose string) (DTMF, error) {
@@ -61,24 +66,38 @@ func (db Database) storeDisclosed(secret string, disclosed string) error {
 	return err
 }
 
+func (db Database) setStatus(secret string, status string) error {
+	_, err := db.db.Exec("UPDATE sessions SET status = $1 WHERE secret = $2", status, secret)
+	db.Notify(secret, "status", status)
+	return err
+}
+
+var emptyString = ""
+
+func (db Database) getStatus(secret string) (string, error) {
+	var status *string
+	row := db.db.QueryRow("SELECT status FROM sessions WHERE secret = $1", secret)
+	err := row.Scan(&status)
+	if status == nil {
+		return "", err
+	} else {
+		return *status, err
+	}
+}
+
 func (db Database) getDisclosed(secret string) (purpose string, disclosed string, err error) {
 	row := db.db.QueryRow("SELECT purpose, disclosed FROM sessions WHERE secret = $1", secret)
 	err = row.Scan(&purpose, &disclosed)
 	return purpose, disclosed, err
 }
 
-func (db Database) updateSessionStatus(secret string, status string) error {
-	_, err := db.db.Exec("UPDATE sessions SET irma_status = $1 WHERE secret = $2", status, secret)
-	return err
-}
-
 func (db Database) activeSessionCount() (int, error) {
 	var res int
 	row := db.db.QueryRow(`
-		SELECT COUNT(*) AS count 
-		FROM sessions 
-		WHERE irma_status NOT IN ('UNREACHABLE', 'TIMEOUT', 'DONE', 'CANCELLED') 
-		AND irma_status IS NOT NULL
+		SELECT COUNT(*) AS count
+		FROM sessions
+		WHERE status NOT IN ('IRMA-UNREACHABLE', 'IRMA-TIMEOUT', 'IRMA-CANCELLED', 'DONE')
+		AND status IS NOT NULL
 	`)
 	err := row.Scan(&res)
 	if err != nil {
@@ -90,4 +109,70 @@ func (db Database) activeSessionCount() (int, error) {
 func (db Database) expire() error {
 	_, err := db.db.Exec("DELETE FROM sessions WHERE created < now() - '1 hour'::interval")
 	return err
+}
+
+// Check the database for any orphaned feeds (caretaker not making progress in
+// the last three seconds) and adopt some of them. Return the feed_ids
+// identifying the adopted feeds.
+func (db Database) AdoptOrphans() ([]string, error) {
+	// The current implementation adopts all orphaned feeds.
+	rows, err := db.db.Query(`
+		UPDATE feeds
+		SET backend_id = $1, last_polled = now()
+		WHERE backend_id != $1
+		AND last_polled < (now() - interval '3 seconds')
+		RETURNING feed_id
+		`, db.backendIdentity)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var feeds []string
+	for rows.Next() {
+		var feed string
+		err := rows.Scan(&feed)
+		if err != nil {
+			return nil, err
+		}
+		feeds = append(feeds, feed)
+	}
+
+	return feeds, nil
+}
+
+func (db Database) Notify(channel, key, value string) error {
+	message := key + " " + value
+	row := db.db.QueryRow("SELECT pg_notify($1, $2)", channel, message)
+	var ignored string
+	err := row.Scan(&ignored)
+	return err
+}
+
+func (db Database) NewFeed(feed_id string) error {
+	_, err := db.db.Exec("INSERT INTO feeds VALUES ($1, $2, now())", feed_id, db.backendIdentity)
+	return err
+}
+
+func (db Database) DeleteFeed(feed_id string) error {
+	_, err := db.db.Exec("DELETE FROM feeds WHERE feed_id = $1", feed_id)
+	return err
+}
+
+// Tells the database a feed is still being polled. Returns true if the current
+// backend is still responsible for polling the feed.
+func (db Database) TouchFeed(feed_id string) (bool, error) {
+	result, err := db.db.Exec(`
+		UPDATE feeds
+		SET last_polled = now()
+		WHERE feed_id = $1
+		AND backend_id = $2`, feed_id, db.backendIdentity)
+	if err != nil {
+		return false, err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected > 0, nil
 }
