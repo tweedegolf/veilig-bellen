@@ -7,6 +7,11 @@ const Ccp = ({ setError, onContact, onAgent, onConnect, onDisconnect, ccpHost })
 
     const containerRef = useCallback(element => {
         if (element !== null) {
+            // Clear the localStorage to ensure that the popup is shown.
+            if (window.localStorage !== null) {
+                window.localStorage.removeItem('connectPopupManager::connect::loginPopup');
+            }
+
             connect.core.initCCP(element, {
                 ccpUrl,
                 loginPopup: true,
