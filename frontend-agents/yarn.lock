@@ -1081,10 +1081,10 @@ alphanum-sort@^1.0.0:
   resolved "https://registry.yarnpkg.com/alphanum-sort/-/alphanum-sort-1.0.2.tgz#97a1119649b211ad33691d9f9f486a8ec9fbe0a3"
   integrity sha1-l6ERlkmyEa0zaR2fn0hqjsn74KM=
 
-amazon-connect-streams@^1.4.5:
-  version "1.4.5"
-  resolved "https://registry.yarnpkg.com/amazon-connect-streams/-/amazon-connect-streams-1.4.5.tgz#8589fcaa2702fe6cb1708a85107e6e9de8655801"
-  integrity sha512-AlDAMjb/ot6omE69X3ULcUesnjKW+6YDM7lrESPYvoo6yZldu1nv3DmwEbmrDnZMgzsj2Pl3gnB4w8N6NdA6rw==
+amazon-connect-streams@^1.4.7:
+  version "1.4.7"
+  resolved "https://registry.yarnpkg.com/amazon-connect-streams/-/amazon-connect-streams-1.4.7.tgz#4988f3798535fc04c6ec28657f7154fcd25e980e"
+  integrity sha512-FniRYTurkCCflRx2rFFCynEa9Gxkaazkbgzdm237+Uu/cNwtlU7LRuTj2gnI+Y1KHamgEQs5pHGeOntIhzwElA==
 
 ansi-regex@^2.0.0:
   version "2.1.1"
