@@ -155,12 +155,6 @@ func main() {
 
 	cfg.broadcaster = makeBroadcaster()
 
-	// TODO: Fail immediately if configured Irma server
-	// can't be reached before entering ListenAndServe.
-	go adoptDaemon(cfg)
-	go expireDaemon(cfg)
-	go notifyDaemon(cfg)
-
 	if connectId != "" && connectSecret != "" {
 		cfg.connect = ConnectConfiguration{
 			id:         connectId,
@@ -176,6 +170,12 @@ func main() {
 	} else {
 		log.Printf("warning: Amazon Connect credentials not provided")
 	}
+
+	// TODO: Fail immediately if configured Irma server
+	// can't be reached before entering ListenAndServe.
+	go adoptDaemon(cfg)
+	go expireDaemon(cfg)
+	go notifyDaemon(cfg)
 
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/session", cfg.handleSession)
@@ -219,6 +219,7 @@ func adoptDaemon(cfg Configuration) {
 					go connectPollDaemon(cfg)
 				} else {
 					// Secret not available, disabling feed.
+					log.Printf("no connect credentials available, disabling kcc feed")
 					cfg.db.DeleteFeed("kcc")
 				}
 			} else {
