@@ -3,6 +3,7 @@ import axios from 'axios';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Alert from '@material-ui/lab/Alert';
+import Grid from '@material-ui/core/Grid';
 
 import ContactInfo from './ContactInfo';
 import Ccp from './Ccp';
@@ -95,8 +96,14 @@ const App = ({ backendUrl, ccpHost }) => {
             <h1>IRMA veilig bellen ({state.mode})</h1>
             {error && <Alert severity="error">{error}</Alert>}
             {state.mode === 'unauthorized' && (<Alert severity="warning">You are yet unauthorized and are required to log in using the pop-up.</Alert>)}
-            <ContactInfo {...state} />
-            <Ccp {...{ setError, onAgent, onContact, onConnect, onDisconnect, ccpHost }} />
+            <Grid container spacing={2}>
+                <Grid className="contactinfo" item xs={12} md={6}>
+                    <ContactInfo {...state} />
+                </Grid>
+                <Grid className="contactinfo" item xs={12} md={6}>
+                    <Ccp {...{ setError, onAgent, onContact, onConnect, onDisconnect, ccpHost }} />
+                </Grid>
+            </Grid>
         </CssBaseline>
     );
 };
