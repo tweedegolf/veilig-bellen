@@ -65,6 +65,8 @@ Under 'Overview' you can find your Login URL, i.e. `https://<instanceid>.awsapps
 You will need to set up a contact flow before doing anything else.
 For your convenience we have exported our demo contact flow and committed it as [`/amazon/contact-flow.json`](amazon/contact-flow.json).
 
+![Amazon Connect Contact Flow example](doc/connect-contact-flow.png)
+
 In essence it is comprised of the following:
 
 * Store customer input, with a custom customer input of maximum 10 digits.
@@ -148,12 +150,38 @@ At the time of writing this README document a new version of the IRMA app is abo
 Now we are ready to actually test and use the project. Because we employ self-signed certificates for running the project, we first need to whitelist the hostnames in the browser.
 
 1. Start by visiting [the session request endpoint of the backend](https://backend.veiligbellen.test.tweede.golf/session?purpose=foo) and accept the self-signed certificate for that hostname. Note that we request a session for the purpose 'foo'. Normal purposes would be 'garbage-collection' or 'benefits'.
+```json
+{
+  "sessionPtr": {
+    "u": "http://192.168.178.79:8088/irma/session/Ohyd1JCHGaFpOqpxoi3b",
+    "irmaqr": "disclosing"
+  },
+  "phonenumber": "+318000227348,5362149328",
+  "dtmf": "5362149328"
+}
+```
 2. Now visit [the agent frontend](https://agents.veiligbellen.test.tweede.golf/). You may need to log in again in a separate tab. Do so, and that tab will close. Make yourself 'available' as an agent, and keep this page open.
+
+![Agents frontend - being available](doc/agents-idle.png)
+---
 3. Now visit [the public demo frontend](http://public.veiligbellen.test.tweede.golf/example.html). This is an example page that makes use of a library that enables the IRMA Veilig Bellen interaction. The button before you simply starts this interaction, for a given backend and purpose.
+
+![Public example frontend](doc/public-example.png)
+---
 4. Press the button, and follow the instructions.
+
+![Public example frontend - following instructions](doc/public-start.png)
+---
 5. The IRMA app will start the dialer of your phone, call this number.
+
+![IRMA disclosure](doc/phone-disclosure.jpg)
+![Dialer on the phone](doc/phone-dialer.jpg)
+---
 6. You will hear a series of beeps, and will subsequently be placed on hold.
 7. Your agent frontend should now notify you of an incoming call, and show the disclosed attributes.
+
+![Agents frontend - incoming call](doc/agents-incoming.png)
+---
 8. Pick up the call and have a conversation with yourself.
 9. Finally you can view the state of the Veilig Bellen system in [the status panel](https://panel.veiligbellen.test.tweede.golf/).
 
