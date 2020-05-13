@@ -230,7 +230,7 @@ To bring the project into production, you will need to configure the following:
 ## Release artefacts
 
 Our CI builds release artefacts for every commit in master. These can be
-downloaded from Travis. TODO: link.
+downloaded from the Github releases page: https://github.com/tweedegolf/veilig-bellen/releases
 
 We use the Nix package manager to build our release artefacts. You will not need
 it unless you need to make changes to CI. Nix will not interfere with your
