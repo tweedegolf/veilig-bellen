@@ -8,7 +8,7 @@ provides cryptographic proof of their credentials. The credentials requested can
 be context-specific and can include their citizen identification number, their
 address and their age. For more information on IRMA, see [irma.app](https://irma.app).
 
-**Warning**: each call is still placed using the GSM network, and the voice data is not encrypted by Veilig Bellen. Veilig Bellen merely provides a mechanism for call centers to view disclosed IRMA credentials for incoming calls securely. Your calls can still be tapped by man-in-the-middle organisations, such as your GSM carrier, VoIP interconnects, Amazon Connect, and national intelligence agencies.
+**Warning**: each call is still placed using the GSM network, and the voice data is not encrypted by Veilig Bellen. Veilig Bellen merely provides a mechanism for call centers to view disclosed IRMA credentials for incoming calls securely.
 
 **Note**: this project is heavily dependent on Amazon Connect. It might be feasible to adapt it to another call center as a service provider, but will require significant effort.
 
@@ -25,6 +25,8 @@ The project consists of a number of components:
 ## Development workflow
 
 As this project is dependent on Amazon Connect, you will require a live Amazon Connect instance running configured to accept calls for Veilig Bellen. Also you will need to proxy API calls from Amazon Lambda to your development instance using a public-facing reverse proxy. You can set up all Amazon services at [Amazon AWS](https://aws.amazon.com/).
+
+**Note**: the development environment uses various `*.test.tweede.golf` hostnames, which point to `localhost`.
 
 ### Reverse proxy
 
@@ -149,41 +151,50 @@ At the time of writing this README document a new version of the IRMA app is abo
 
 Now we are ready to actually test and use the project. Because we employ self-signed certificates for running the project, we first need to whitelist the hostnames in the browser.
 
-1. Start by visiting [the session request endpoint of the backend](https://backend.veiligbellen.test.tweede.golf/session?purpose=foo) and accept the self-signed certificate for that hostname. Note that we request a session for the purpose 'foo'. Normal purposes would be 'garbage-collection' or 'benefits'.
-```json
-{
-  "sessionPtr": {
-    "u": "http://192.168.178.79:8088/irma/session/Ohyd1JCHGaFpOqpxoi3b",
-    "irmaqr": "disclosing"
-  },
-  "phonenumber": "+318000227348,5362149328",
-  "dtmf": "5362149328"
-}
-```
-2. Now visit [the agent frontend](https://agents.veiligbellen.test.tweede.golf/). You may need to log in again in a separate tab. Do so, and that tab will close. Make yourself 'available' as an agent, and keep this page open.
+1. Start by visiting the session request endpoint of the backend and accept the self-signed certificate for that hostname:
 
-![Agents frontend - being available](doc/agents-idle.png)
----
-3. Now visit [the public demo frontend](http://public.veiligbellen.test.tweede.golf/example.html). This is an example page that makes use of a library that enables the IRMA Veilig Bellen interaction. The button before you simply starts this interaction, for a given backend and purpose.
+    <https://backend.veiligbellen.test.tweede.golf/session?purpose=foo>
 
-![Public example frontend](doc/public-example.png)
----
+    Note that we request a session for the purpose 'foo'. Normal purposes would be 'garbage-collection' or 'benefits'.
+    ```json
+    {
+      "sessionPtr": {
+        "u": "http://192.168.178.79:8088/irma/session/Ohyd1JCHGaFpOqpxoi3b",
+        "irmaqr": "disclosing"
+      },
+      "phonenumber": "+318000227348,5362149328",
+      "dtmf": "5362149328"
+    }
+    ```
+2. Now visit the agent frontend. You may need to log in again in a separate tab. Do so, and that tab will close. Make yourself 'available' as an agent, and keep this page open:
+
+    <https://agents.veiligbellen.test.tweede.golf/>
+
+    ![Agents frontend - being available](doc/agents-idle.png)
+3. Now visit the public demo frontend:
+
+    <http://public.veiligbellen.test.tweede.golf/example.html>
+
+    This is an example page that makes use of a library that enables the IRMA Veilig Bellen interaction. The button before you simply starts this interaction, for a given backend and purpose.
+
+    ![Public example frontend](doc/public-example.png)
 4. Press the button, and follow the instructions.
 
 ![Public example frontend - following instructions](doc/public-start.png)
 ---
 5. The IRMA app will start the dialer of your phone, call this number.
 
-![IRMA disclosure](doc/phone-disclosure.jpg)
-![Dialer on the phone](doc/phone-dialer.jpg)
----
+    ![IRMA disclosure](doc/phone-disclosure.jpg)
+    ![Dialer on the phone](doc/phone-dialer.jpg)
 6. You will hear a series of beeps, and will subsequently be placed on hold.
 7. Your agent frontend should now notify you of an incoming call, and show the disclosed attributes.
 
 ![Agents frontend - incoming call](doc/agents-incoming.png)
 ---
 8. Pick up the call and have a conversation with yourself.
-9. Finally you can view the state of the Veilig Bellen system in [the status panel](https://panel.veiligbellen.test.tweede.golf/).
+9. Finally you can view the state of the Veilig Bellen system in the status panel:
+
+    <https://panel.veiligbellen.test.tweede.golf/>
 
 ## Manual build frontends
 
