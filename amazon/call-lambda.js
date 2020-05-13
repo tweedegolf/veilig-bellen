@@ -1,6 +1,6 @@
 // Set CALL_URL to something like http://proxy.irma.bellen.tweede.golf/call
 
-const http = require('http');
+const http = require('https');
 const querystring = require('querystring');
 
 exports.handler = (data, _context, callback) => {
