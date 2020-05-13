@@ -223,6 +223,7 @@ To bring the project into production, you will need to configure the following:
 - One or more backends must be deployed. Travis CI provides up-to-date backend
   docker images for the master branch. Again, see `docker-compose.yml` for
   example configuration, but run the command as specified in the docker image instead of `watch.sh`, which is only for development intended and not provided in the production docker image.
+- A reverse-proxy needs to be configured to serve the backend API over HTTPS.
 - Manually build the frontends and serve them on S3 or similar.
 - Include the public library on your intented usecase website, and provide a button calling the interaction as in [/frontend_public/src/example.html](frontend_public/src/example.html).
 
