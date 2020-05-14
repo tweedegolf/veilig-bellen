@@ -28,7 +28,7 @@ const ContactInfo = ({ phonenumber, disclosed, purpose }) => (
         <CardContent>
         <h2>Attributen van contactpersoon</h2>
             <Details data={
-                [{ key: "phonenumber", value: phonenumber }, { key: "purpose", value: purpose }].concat(
+                [{ key: "Telefoonnummer", value: phonenumber }, { key: "Doel", value: purpose }].concat(
                     disclosed ? disclosed.flat().map(attr => ({ key: attr.id, value: attr.rawvalue })) : []
                 )
             } />
