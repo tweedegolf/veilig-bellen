@@ -212,6 +212,8 @@ You can build the public library by running:
 
 Generally all build artifacts can be found in the `/dist` folder of the respective subprojects. These artefacts can be placed in any webroot to serve them, for example on Amazon S3.
 
+See [/frontend-public/src/example.html](frontend-public/src/example.html) for an example on how to include the button in your web page.
+
 ## Production
 
 To bring the project into production, you will need to configure the following:
@@ -225,7 +227,7 @@ To bring the project into production, you will need to configure the following:
   example configuration, but run the command as specified in the docker image instead of `watch.sh`, which is only for development intended and not provided in the production docker image.
 - A reverse-proxy needs to be configured to serve the backend API over HTTPS.
 - Manually build the frontends and serve them on S3 or similar.
-- Include the public library on your intented usecase website, and provide a button calling the interaction as in [/frontend_public/src/example.html](frontend_public/src/example.html).
+- Include the public library on your intented usecase website, and provide a button calling the interaction as in [/frontend-public/src/example.html](frontend-public/src/example.html).
 
 ## Release artefacts
 
