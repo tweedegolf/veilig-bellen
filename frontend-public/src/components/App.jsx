@@ -1,14 +1,16 @@
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useCallback } from 'preact/hooks';
 
 import axios from 'axios';
-import { handleSession } from '@privacybydesign/irmajs';
+import { handleSession, detectUserAgent } from '@privacybydesign/irmajs';
 
 import Inner from './Inner';
 
 const App = ({ hostname, purpose, onClose }) => {
     const [state, setState] = useState('INIT');
     const [storedPhonenumber, setPhonenumber] = useState(null);
+
+    const getUserAgent = useCallback(detectUserAgent, []);
 
     const setError = () => { setState('ERROR'); };
 
@@ -46,6 +48,11 @@ const App = ({ hostname, purpose, onClose }) => {
             setError();
         }
     };
+
+    if (state === 'IRMA-CONNECTED' && getUserAgent() !== 'Desktop') {
+        onClose();
+        return null;
+    }
 
     return <div className="dialog">
         <button className="button-icon" onClick={onClose}><i class="material-icons">close</i></button>
