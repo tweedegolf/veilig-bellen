@@ -202,7 +202,7 @@ You may wish to manually build the three frontends and deploy them by copying th
 
 You can build your own frontend manually by running:
 
-    docker-compose run -e BACKEND_URL="https://foo" frontend_public yarn run build-example
+    docker-compose run -e BACKEND_URL="https://foo" -e IRMAJS_LANGUAGE=nl frontend_public yarn run build-example
 
     docker-compose run -e BACKEND_URL="https://foo" -e CCP_HOST="example.awsapps.com" frontend_agents yarn run build
 

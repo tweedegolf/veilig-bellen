@@ -40,7 +40,8 @@ const App = ({ hostname, purpose, onClose }) => {
         });
 
         try {
-            await handleSession(sessionPtr);
+            const language = process.env.IRMAJS_LANGUAGE || 'en';
+            await handleSession(sessionPtr, {language});
         } catch (e) {
             console.error(e);
             setError();
