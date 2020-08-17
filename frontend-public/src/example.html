@@ -19,6 +19,7 @@
     <script>
         window.BACKEND_HOST = process.env.BACKEND_HOST;
         window.PURPOSE = process.env.PURPOSE;
+        window.IRMAJS_LANGUAGE = process.env.IRMAJS_LANGUAGE;
     </script>
 </head>
 
@@ -33,7 +34,7 @@
         </div>
         <div class="card-action">
             <button class="waves-effect waves-light btn"
-                onClick="veiligBellen.start({ hostname: window.BACKEND_HOST, purpose: window.PURPOSE })">
+                onClick="veiligBellen.start({ hostname: window.BACKEND_HOST, purpose: window.PURPOSE, irmaJsLang: window.IRMAJS_LANGUAGE })">
                 Place your call!
                 <i class="material-icons right">call</i>
             </button>
