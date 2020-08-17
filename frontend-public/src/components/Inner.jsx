@@ -47,6 +47,7 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
                 
             </Fragment>;
         case 'IRMA-CANCELLED':
+        case 'CANCELLED':
             return <p>U hebt de IRMA interactie gestopt.</p>;
         case 'CALLED':
             return <p>
@@ -57,6 +58,8 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
             return <p>U bent nu in gesprek met de medewerker.</p>;
         case 'DONE':
             return <p>Uw gesprek is voltooid.</p>;
+        case 'IRMA-UNREACHABLE':
+            return <p>Uw sessie is niet bereikbaar. Mogelijk is deze verlopen.</p>;
         default:
         case 'ERROR':
             return <p>Er ging iets mis, probeer het opnieuw.</p>;

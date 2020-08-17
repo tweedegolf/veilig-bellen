@@ -42,8 +42,12 @@ const App = ({ hostname, purpose, onClose }) => {
         try {
             await handleSession(sessionPtr);
         } catch (e) {
-            console.error(e);
-            setError();
+            if(e === 'CANCELLED') {
+                setState(e)
+            } else {
+                console.error(e);
+                setError();
+            }
         }
     };
 
