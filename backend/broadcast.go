@@ -82,8 +82,8 @@ func notifyDaemon(cfg Configuration) {
 			subscribers := channels[op.feed]
 			for i, l := range subscribers {
 				if l == op.listener {
-					subscribers[i] = subscribers[len(channels)-1]
-					subscribers = subscribers[:len(channels)-1]
+					subscribers[i] = subscribers[len(subscribers)-1]
+					subscribers = subscribers[:len(subscribers)-1]
 					channels[op.feed] = subscribers
 					if len(subscribers) == 0 {
 						cfg.db.listener.Unlisten(op.feed)
