@@ -49,10 +49,7 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
         case 'IRMA-CANCELLED':
             return <p>U hebt de IRMA interactie gestopt.</p>;
         case 'CALLED':
-            return <p>
-                U bent succesvol verbonden met de wachtrij.
-                Een medewerker neemt zo spoedig mogelijk op.
-            </p>;
+            return <p>U bent succesvol met ons verbonden. We helpen u zo spoedig mogelijk.</p>;
         case 'CONNECTED':
             return <p>U bent nu in gesprek met de medewerker.</p>;
         case 'DONE':
