@@ -65,7 +65,7 @@ services:
     - BACKEND_IRMASERVER=http://irma:8088
     - BACKEND_IRMAHEADERKEY=Authorization
     - BACKEND_IRMAHEADERVALUE=12345
-    - BACKEND_PHONENUMBER=+318000227348
+    - BACKEND_PHONENUMBER=+318000201001
     - BACKEND_PURPOSEMAP={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}
     - BACKEND_CONNECT_ID
     - BACKEND_CONNECT_SECRET
@@ -88,6 +88,7 @@ services:
     - "parcel"
     - "serve"
     - "--no-hmr"
+    - "--no-autoinstall"
     - "src/index.html"
     environment:
     - HOME=/tmp/nodehome
@@ -110,6 +111,7 @@ services:
     - "parcel"
     - "serve"
     - "--no-hmr"
+    - "--no-autoinstall"
     - "src/index.html"
     environment:
     - HOME=/tmp/nodehome
@@ -131,6 +133,7 @@ services:
     - "parcel"
     - "serve"
     - "--no-hmr"
+    - "--no-autoinstall"
     - "src/example.html"
     environment:
     - HOME=/tmp/nodehome
