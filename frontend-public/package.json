@@ -12,8 +12,7 @@
     "@privacybydesign/irmajs": "^0.1.9",
     "axios": "^0.19.2",
     "babel-polyfill": "^6.26.0",
-    "preact": "^10.4.1",
-    "qrcode": "^1.4.4"
+    "preact": "^10.4.1"
   },
   "devDependencies": {
     "parcel": "^1.12.4",

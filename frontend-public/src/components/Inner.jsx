@@ -1,30 +1,6 @@
 import { Fragment, h } from 'preact';
-import { useEffect, useState, useCallback } from 'preact/hooks';
-import QRCode from 'qrcode';
-
-const makePhoneLink = (phonenumber) => `tel:${phonenumber}`;
 
 const Inner = ({ state, onStartSession, phonenumber }) => {
-    const [qrcodeSvg, setQrcodeSvg] = useState(null);
-
-    useEffect(() => {
-        if (phonenumber === null) {
-            return;
-        }
-
-        QRCode.toString(makePhoneLink(phonenumber), { format: 'svg' }).then((str, err) => {
-            if (!err) {
-                setQrcodeSvg(str);
-            }
-        });
-    }, [phonenumber]);
-
-    const qrcodeContainer = useCallback(node => {
-        if (node !== null) {
-            node.innerHTML = qrcodeSvg;
-        }
-    }, [qrcodeSvg]);
-
     switch (state) {
         case 'INIT':
             return <Fragment>
@@ -37,14 +13,13 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
             return <p>Volg de instructie in de IRMA interactie.</p>;
         case 'IRMA-DONE':
             return <Fragment>
-                <h2>U kunt nu het gesprek starten via uw bel-applicatie</h2>
-                <p className="underline">>
-                    Indien u geen telefoon hebt gebruikt om uw IRMA sessie door te zetten,
-                    kunt u <a href={makePhoneLink(phonenumber)}>{phonenumber}</a> bellen of de volgende QR-code inscannen met een applicatie:
-                </p>  
-                <div className="phonenumber-qrcode" ref={qrcodeContainer} >laden...</div>
-                <p>U hoort eerst een aantal tonen, waarna u in de wachtrij geplaatst wordt.</p>
-                
+                <h2>U kunt ons nu beveiligd bellen met uw mobiele telefoon</h2>
+                <p>
+                    We hebben uw gegevens correct ontvangen. U kunt nu met ons bellen via de IRMA-app.<br />
+                    Nadat u op 'bellen' heeft gedrukt hoort u eerst enkele tonen. Daarna bent u verbonden en staat u in de wachtrij. <br />
+                </p>
+                <p>We nemen zo spoedig mogelijk op.</p>
+
             </Fragment>;
         case 'IRMA-CANCELLED':
             return <p>U hebt de IRMA interactie gestopt.</p>;
