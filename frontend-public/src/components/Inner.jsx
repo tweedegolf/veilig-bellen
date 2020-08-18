@@ -15,9 +15,6 @@ const Inner = ({ state }) => {
                 <p>We nemen zo spoedig mogelijk op.</p>
 
             </Fragment>;
-        case 'IRMA-CANCELLED':
-        case 'CANCELLED':
-            return <p>U hebt de IRMA interactie gestopt.</p>;
         case 'CALLED':
             return <p>U bent succesvol met ons verbonden. We helpen u zo spoedig mogelijk.</p>;
         case 'CONNECTED':
