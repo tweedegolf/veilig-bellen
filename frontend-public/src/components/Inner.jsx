@@ -1,13 +1,7 @@
 import { Fragment, h } from 'preact';
 
-const Inner = ({ state, onStartSession, phonenumber }) => {
+const Inner = ({ state }) => {
     switch (state) {
-        case 'INIT':
-            return <Fragment>
-                <h2>Wilt u met een medewerker telefoneren?</h2>
-                <p className="underline">Klik op de onderstaande knop om verder te gaan</p>
-                <button onClick={onStartSession}><i class="material-icons">call</i> Start het gesprek</button>
-            </Fragment>;
         case 'IRMA-INITIALIZED':
         case 'IRMA-CONNECTED':
             return <p>Volg de instructie in de IRMA interactie.</p>;
@@ -21,9 +15,6 @@ const Inner = ({ state, onStartSession, phonenumber }) => {
                 <p>We nemen zo spoedig mogelijk op.</p>
 
             </Fragment>;
-        case 'IRMA-CANCELLED':
-        case 'CANCELLED':
-            return <p>U hebt de IRMA interactie gestopt.</p>;
         case 'CALLED':
             return <p>U bent succesvol met ons verbonden. We helpen u zo spoedig mogelijk.</p>;
         case 'CONNECTED':

@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useCallback } from 'preact/hooks';
+import { useState, useCallback, useEffect } from 'preact/hooks';
 
 import axios from 'axios';
 import { handleSession, detectUserAgent } from '@privacybydesign/irmajs';
@@ -8,7 +8,6 @@ import Inner from './Inner';
 
 const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
     const [state, setState] = useState('INIT');
-    const [storedPhonenumber, setPhonenumber] = useState(null);
 
     const getUserAgent = useCallback(detectUserAgent, []);
 
@@ -22,8 +21,7 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
             return;
         }
 
-        const { sessionPtr, phonenumber, dtmf } = response.data;
-        setPhonenumber(phonenumber);
+        const { sessionPtr, dtmf } = response.data;
 
         const client = new WebSocket(`wss://${hostname}/session/status?dtmf=${encodeURIComponent(dtmf)}`);
 
@@ -54,6 +52,16 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
         }
     };
 
+    // Start IRMA session immediately
+    useEffect(onStartSession, []);
+
+    // Close popup on cancellation
+    if(state === 'IRMA-CANCELLED' || state === 'CANCELLED') {
+        onClose();
+        return null;
+    }
+
+    // Close popup on connection if on mobile device
     if (state === 'IRMA-CONNECTED' && getUserAgent() !== 'Desktop') {
         onClose();
         return null;
@@ -61,7 +69,7 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
 
     return <div className="dialog">
         <button className="button-icon" onClick={onClose}><i class="material-icons">close</i></button>
-        <Inner {...{ state, onStartSession, phonenumber: storedPhonenumber }} />
+        <Inner {...{ state }} />
     </div>
 };
 
