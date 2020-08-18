@@ -54,6 +54,13 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
         }
     };
 
+    // Close popup on cancellation
+    if(state === 'IRMA-CANCELLED' || state === 'CANCELLED') {
+        onClose();
+        return null;
+    }
+
+    // Close popup on connection if on mobile device
     if (state === 'IRMA-CONNECTED' && getUserAgent() !== 'Desktop') {
         onClose();
         return null;
