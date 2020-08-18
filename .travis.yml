@@ -6,6 +6,7 @@ script:
 - docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh
   `id -u` `id -g`"
 - ls -aR build || true
+- bin/docker_push.sh
 deploy:
 - provider: releases
   api_key:
