@@ -8,7 +8,7 @@ import Inner from './Inner';
 
 // States for which we should not render the popup
 const hiddenStates = [
-    'INIT'
+    'INIT', 'IRMA-INITIALIZED', 
 ]
 
 const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
