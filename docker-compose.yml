@@ -136,6 +136,7 @@ services:
     - HOME=/tmp/nodehome
     - BACKEND_HOST=backend.veiligbellen.test.tweede.golf
     - PURPOSE=foo
+    - IRMAJS_LANGUAGE=nl
     networks:
     - default
     expose: [1234]

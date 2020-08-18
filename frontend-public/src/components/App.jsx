@@ -6,7 +6,7 @@ import { handleSession } from '@privacybydesign/irmajs';
 
 import Inner from './Inner';
 
-const App = ({ hostname, purpose, onClose }) => {
+const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
     const [state, setState] = useState('INIT');
     const [storedPhonenumber, setPhonenumber] = useState(null);
 
@@ -40,7 +40,8 @@ const App = ({ hostname, purpose, onClose }) => {
         });
 
         try {
-            await handleSession(sessionPtr);
+            const language = irmaJsLang || 'en';
+            await handleSession(sessionPtr, {language});
         } catch (e) {
             console.error(e);
             setError();
