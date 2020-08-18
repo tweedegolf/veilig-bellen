@@ -43,8 +43,12 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
             const language = irmaJsLang || 'en';
             await handleSession(sessionPtr, {language});
         } catch (e) {
-            console.error(e);
-            setError();
+            if(e === 'CANCELLED') {
+                setState(e)
+            } else {
+                console.error(e);
+                setError();
+            }
         }
     };
 
