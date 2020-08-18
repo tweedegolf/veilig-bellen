@@ -34,7 +34,7 @@ let
   };
 
   backend-image = pkgs.dockerTools.buildImage {
-    name = "docker.tgrep.nl/gemeente-nijmegen/veilig-bellen/veilig-bellen-backend";
+    name = "tweedegolf/veilig-bellen-backend";
     tag = "latest";
     contents = pkgs.stdenvNoCC.initialPath
       ++ (with pkgs; [ backend bashInteractive busybox cacert ]);
