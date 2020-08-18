@@ -35,8 +35,10 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
         });
 
         client.addEventListener('message', (event) => {
-            setState(event.data);
-            console.log('Message', event.data);
+            if(event.data !== ''){
+                setState(event.data);
+                console.log('Message', event.data);
+            }
         });
 
         try {
@@ -54,6 +56,11 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
 
     // Start IRMA session immediately
     useEffect(onStartSession, []);
+
+    // Don't draw popup in INIT state
+    if (state === 'INIT') {
+        return null;
+    }
 
     // Close popup on cancellation
     if(state === 'IRMA-CANCELLED' || state === 'CANCELLED') {
