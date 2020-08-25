@@ -106,6 +106,11 @@ func (db Database) activeSessionCount() (int, error) {
 	return res, nil
 }
 
+func (db Database) destroySession(secret string) error {
+	_, err := db.db.Exec("DELETE FROM sessions WHERE secret = $1", secret)
+	return err
+}
+
 func (db Database) expire() error {
 	_, err := db.db.Exec("DELETE FROM sessions WHERE created < now() - '1 hour'::interval")
 	return err
