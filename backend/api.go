@@ -22,6 +22,9 @@ type DTMF = string
 // A Secret allows retrieving the revealed attributes.
 type Secret = string
 
+// A StatusToken allows only retrieving the status of a session.
+type StatusToken = string
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -34,8 +37,7 @@ var irmaExternalURLRegexp *regexp.Regexp = regexp.MustCompile(`^http(s?)://(.*)/
 // A SessionResponse describes the public parts of a newly created session.
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
-	Phonenumber string   `json:"phonenumber,omitempty"`
-	Dtmf        string   `json:"dtmf,omitempty"`
+	StatusToken string   `json:"statusToken,omitempty"`
 }
 
 func (cfg Configuration) phonenumber(dtmf string) string {
@@ -90,7 +92,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	// This function is responsible for ensuring the irma session secret is
 	// stored in the database before it returns the QR code to the user.
 	purpose := r.FormValue("purpose")
-	dtmf, err := cfg.db.NewSession(purpose)
+	dtmf, statusToken, err := cfg.db.NewSession(purpose)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -133,8 +135,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 
 	var session SessionResponse
 	session.SessionPtr = pkg.SessionPtr
-	session.Phonenumber = cfg.phonenumber(dtmf)
-	session.Dtmf = dtmf
+	session.StatusToken = statusToken
 
 	if cfg.IrmaExternalURL != "" {
 		// Rewrite IRMA server url to match irma-external-url arg
@@ -193,25 +194,17 @@ func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
 
-	dtmf := r.FormValue("dtmf")
-	if dtmf == "" {
-		http.Error(w, "No dtmf passed", http.StatusBadRequest)
+	statusToken := r.FormValue("statusToken")
+	if statusToken == "" {
+		http.Error(w, "No status token passed", http.StatusBadRequest)
 		return
 	}
 
-	sessionToken, err := cfg.db.secretFromDTMF(dtmf)
-	if err == ErrNoRows {
-		http.Error(w, "session not found", http.StatusNotFound)
-	} else if err != nil {
-		log.Printf("failed to retrieve secret from dtmf: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	}
-
 	statusUpdates := make(chan Message, 2)
-	cfg.broadcaster.Subscribe(sessionToken, statusUpdates)
-	defer cfg.broadcaster.Unsubscribe(sessionToken, statusUpdates)
+	cfg.broadcaster.Subscribe(statusToken, statusUpdates)
+	defer cfg.broadcaster.Unsubscribe(statusToken, statusUpdates)
 
-	status, err := cfg.db.getStatus(sessionToken)
+	status, err := cfg.db.getStatus(statusToken)
 	if err != nil {
 		http.Error(w, "unknown token", http.StatusNotFound)
 		return

@@ -37,9 +37,9 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
                 return;
             }
 
-            const { sessionPtr, dtmf } = response.data;
+            const { sessionPtr, statusToken } = response.data;
 
-            const client = new WebSocket(`wss://${hostname}/session/status?dtmf=${encodeURIComponent(dtmf)}`);
+            const client = new WebSocket(`wss://${hostname}/session/status?statusToken=${encodeURIComponent(statusToken)}`);
 
             client.addEventListener('error', (error) => {
                 console.error('Connect Error: ', error);

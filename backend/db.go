@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"time"
@@ -20,35 +21,39 @@ type Database struct {
 	backendIdentity string
 }
 
-func (db Database) NewSession(purpose string) (DTMF, error) {
+func (db Database) NewSession(purpose string) (DTMF, StatusToken, error) {
 	var err error
 	for attempt := 0; attempt < 10; attempt++ {
 		var n *big.Int
 		n, err = rand.Int(rand.Reader, big.NewInt(10_000_000_000))
 		if err != nil {
-			return "", err
+			err = fmt.Errorf("failed to generate dtmf: %w", err)
+			return "", "", err
 		}
-
 		dtmf := fmt.Sprintf("%010d", n)
-		if err != nil {
-			err = fmt.Errorf("failed to generate secrets: %w", err)
-			return "", err
-		}
 
-		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, DEFAULT, DEFAULT, DEFAULT)", dtmf, purpose)
+		statusBytes := make([]byte, 24)
+		_, err := rand.Read(statusBytes)
+		if err != nil {
+			err = fmt.Errorf("failed to generate status token: %w", err)
+			return "", "", err
+		}
+		statusToken := base64.URLEncoding.EncodeToString(statusBytes)
+
+		_, err = db.db.Exec("INSERT INTO sessions VALUES (NULL, $1, $2, $3, DEFAULT, DEFAULT, DEFAULT)", dtmf, statusToken, purpose)
 		pqErr, ok := err.(*pq.Error)
 		if ok && pqErr.Code.Name() == "unique_violation" {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		} else if err != nil {
 			err = fmt.Errorf("failed to store session: %w", err)
-			return "", err
+			return "", "", err
 		}
 
-		return dtmf, nil
+		return dtmf, statusToken, nil
 	}
 	err = fmt.Errorf("failed to find unique secrets: %w", err)
-	return "", err
+	return "", "", err
 }
 
 func (db Database) storeSecret(dtmf string, secret string) error {
@@ -69,14 +74,20 @@ func (db Database) storeDisclosed(secret string, disclosed string) error {
 }
 
 func (db Database) setStatus(secret string, status string) error {
-	_, err := db.db.Exec("UPDATE sessions SET status = $1 WHERE secret = $2", status, secret)
-	db.Notify(secret, "status", status)
+	var statusToken StatusToken
+	row := db.db.QueryRow(`
+		UPDATE sessions
+		SET status = $1
+		WHERE secret = $2
+		RETURNING status_token`, status, secret)
+	err := row.Scan(&statusToken)
+	db.Notify(statusToken, "status", status)
 	return err
 }
 
-func (db Database) getStatus(secret string) (string, error) {
+func (db Database) getStatus(statusToken StatusToken) (string, error) {
 	var status *string
-	row := db.db.QueryRow("SELECT status FROM sessions WHERE secret = $1", secret)
+	row := db.db.QueryRow("SELECT status FROM sessions WHERE status_token = $1", statusToken)
 	err := row.Scan(&status)
 	if status == nil {
 		return "", err
