@@ -10,6 +10,8 @@ import (
 	"github.com/lib/pq"
 )
 
+// ErrNoRows can be compared to a database error in order to check if the result
+// contained no rows.
 var ErrNoRows = sql.ErrNoRows
 
 type Database struct {
@@ -54,8 +56,8 @@ func (db Database) storeSecret(dtmf string, secret string) error {
 	return err
 }
 
-func (db Database) secretFromDTMF(dtmf string) (string, error) {
-	var secret string
+func (db Database) secretFromDTMF(dtmf DTMF) (Secret, error) {
+	var secret Secret
 	row := db.db.QueryRow("SELECT secret FROM sessions WHERE dtmf = $1", dtmf)
 	err := row.Scan(&secret)
 	return secret, err
@@ -72,17 +74,14 @@ func (db Database) setStatus(secret string, status string) error {
 	return err
 }
 
-var emptyString = ""
-
 func (db Database) getStatus(secret string) (string, error) {
 	var status *string
 	row := db.db.QueryRow("SELECT status FROM sessions WHERE secret = $1", secret)
 	err := row.Scan(&status)
 	if status == nil {
 		return "", err
-	} else {
-		return *status, err
 	}
+	return *status, err
 }
 
 func (db Database) getDisclosed(secret string) (purpose string, disclosed string, err error) {
@@ -149,24 +148,24 @@ func (db Database) Notify(channel, key, value string) error {
 	return err
 }
 
-func (db Database) NewFeed(feed_id string) error {
-	_, err := db.db.Exec("INSERT INTO feeds VALUES ($1, $2, now())", feed_id, db.backendIdentity)
+func (db Database) NewFeed(feedID string) error {
+	_, err := db.db.Exec("INSERT INTO feeds VALUES ($1, $2, now())", feedID, db.backendIdentity)
 	return err
 }
 
-func (db Database) DeleteFeed(feed_id string) error {
-	_, err := db.db.Exec("DELETE FROM feeds WHERE feed_id = $1", feed_id)
+func (db Database) DeleteFeed(feedID string) error {
+	_, err := db.db.Exec("DELETE FROM feeds WHERE feed_id = $1", feedID)
 	return err
 }
 
 // Tells the database a feed is still being polled. Returns true if the current
 // backend is still responsible for polling the feed.
-func (db Database) TouchFeed(feed_id string) (bool, error) {
+func (db Database) TouchFeed(feedID string) (bool, error) {
 	result, err := db.db.Exec(`
 		UPDATE feeds
 		SET last_polled = now()
 		WHERE feed_id = $1
-		AND backend_id = $2`, feed_id, db.backendIdentity)
+		AND backend_id = $2`, feedID, db.backendIdentity)
 	if err != nil {
 		return false, err
 	}

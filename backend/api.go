@@ -16,7 +16,10 @@ import (
 	"github.com/privacybydesign/irmago/server"
 )
 
+// A DTMF code.
 type DTMF = string
+
+// A Secret allows retrieving the revealed attributes.
 type Secret = string
 
 var upgrader = websocket.Upgrader{
@@ -28,6 +31,7 @@ var upgrader = websocket.Upgrader{
 
 var irmaExternalURLRegexp *regexp.Regexp = regexp.MustCompile(`^http(s?)://(.*)/irma/session`)
 
+// A SessionResponse describes the public parts of a newly created session.
 type SessionResponse struct {
 	SessionPtr  *irma.Qr `json:"sessionPtr,omitempty"`
 	Phonenumber string   `json:"phonenumber,omitempty"`
@@ -38,6 +42,7 @@ func (cfg Configuration) phonenumber(dtmf string) string {
 	return cfg.PhoneNumber + "," + dtmf
 }
 
+// Build the IRMA request for attributes.
 func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.RequestorRequest, error) {
 	condiscon, ok := cfg.PurposeMap[purpose]
 	if !ok {
@@ -59,7 +64,7 @@ func setDefaultHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 }
 
-// Check if the service is still healty and yield 200 OK if so.
+// Check if the service is still healthy and yield 200 OK if so.
 func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 	_, err := cfg.db.activeSessionCount()
 
@@ -265,6 +270,8 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// A DiscloseResponse describes the revealed IRMA attributes and the purpose of
+// the call.
 type DiscloseResponse struct {
 	Purpose   string          `json:"purpose"`
 	Disclosed json.RawMessage `json:"disclosed"`
