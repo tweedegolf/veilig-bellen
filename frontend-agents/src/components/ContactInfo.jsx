@@ -7,6 +7,7 @@ import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
+import Link from '@material-ui/core/Link';
 
 const Details = ({ data, urlTemplates }) => (
     <TableContainer>
@@ -16,8 +17,8 @@ const Details = ({ data, urlTemplates }) => (
                     <TableRow key={key}>
                         <TableCell component="th">{key}</TableCell>
                         <TableCell>{
-                            key in urlTemplates
-                                ? <a href={urlTemplates[key].replace('{}', encodeURIComponent(value))}>{value}</a>
+                            key in urlTemplates 
+                                ? <Link href={urlTemplates[key].replace('{}', encodeURIComponent(value))}>{value}</Link>
                                 : value
                         }</TableCell>
                     </TableRow>
