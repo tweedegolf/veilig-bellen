@@ -16,7 +16,6 @@ export const useFeed = ({
     onDisconnect,
     onError,
     onConnectStatus,
-    onSessionCount,
     onMessage,
 }) => {
     const api = useApi();
@@ -31,12 +30,9 @@ export const useFeed = ({
             case 'amazon-connect':
                 onConnectStatus && onConnectStatus(data.value);
                 break;
-            case 'active-sessions':
-                onSessionCount && onSessionCount(data.value);
-                break;
             default:
                 // unregocnized message, pass the event on
-                // onMessage && onMessage(e)
+                onMessage && onMessage(e)
         }
     }
     useEffect(() => {
