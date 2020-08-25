@@ -5,6 +5,7 @@ const querystring = require('querystring');
 
 exports.handler = (data, _context, callback) => {
     const attributes = data.Details.ContactData.Attributes;
+    const parameters = data.Details.Parameters;
     const url = process.env.CALL_URL;
     const req = http.request(url, {
         method: 'POST',
@@ -24,5 +25,6 @@ exports.handler = (data, _context, callback) => {
     });
     req.on('error', callback);
     req.write(querystring.stringify(attributes));
+    req.write(querystring.stringify(parameters));
     req.end();
 };
