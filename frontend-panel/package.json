@@ -4,7 +4,7 @@
   "main": "index.html",
   "license": "MIT",
   "scripts": {
-    "build": "NODE_ENV=production parcel build --no-source-maps --out-dir dist src/index.html"
+    "build": "NODE_ENV=production parcel build --no-source-maps -d dist src/index.html"
   },
   "dependencies": {
     "@material-ui/core": "^4.9.11",
@@ -14,7 +14,7 @@
     "socket.io-client": "^2.3.0"
   },
   "devDependencies": {
-    "parcel": "^2.0.0-alpha.3.2",
+    "parcel": "^1.12.4",
     "sass": "^1.26.2"
   },
   "targets": {
