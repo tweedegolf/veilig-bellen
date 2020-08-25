@@ -17,7 +17,7 @@ const Details = ({ data, urlTemplates }) => (
                     <TableRow key={key}>
                         <TableCell component="th">{key}</TableCell>
                         <TableCell>{
-                            key in urlTemplates 
+                            urlTemplates && key in urlTemplates 
                                 ? <Link href={urlTemplates[key].replace('{}', encodeURIComponent(value))}>{value}</Link>
                                 : value
                         }</TableCell>
