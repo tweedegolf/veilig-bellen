@@ -34,7 +34,7 @@ const getDisclosure = async (backendUrl, secret) => {
     }
 };
 
-const App = ({ backendUrl, ccpHost }) => {
+const App = ({ backendUrl, ccpHost, urlTemplates }) => {
     const [state, setState] = useState({ mode: 'unauthorized' });
     const [error, setErrorBase] = useState(null);
 
@@ -101,7 +101,7 @@ const App = ({ backendUrl, ccpHost }) => {
                     <Ccp {...{ setError, onAgent, onContact, onConnect, onDisconnect, ccpHost }} />
                 </Grid>
                 <Grid className="contactinfo" item xs={6}>
-                    <ContactInfo {...state} />
+                    <ContactInfo {...state} urlTemplates={urlTemplates} />
                 </Grid>
             </Grid>
         </CssBaseline>

@@ -8,14 +8,18 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
 
-const Details = ({ data }) => (
+const Details = ({ data, urlTemplates }) => (
     <TableContainer>
         <Table>
             <TableBody>
                 {data.map(({ key, value }) => (
                     <TableRow key={key}>
                         <TableCell component="th">{key}</TableCell>
-                        <TableCell>{value}</TableCell>
+                        <TableCell>{
+                            key in urlTemplates
+                                ? <a href={urlTemplates[key].replace('{}', encodeURIComponent(value))}>{value}</a>
+                                : value
+                        }</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -23,11 +27,11 @@ const Details = ({ data }) => (
     </TableContainer>
 )
 
-const ContactInfo = ({ phonenumber, disclosed, purpose }) => (
-    phonenumber ? <Card>    
+const ContactInfo = ({ phonenumber, disclosed, purpose, urlTemplates }) => (
+    phonenumber ? <Card>
         <CardContent>
-        <h2>Attributen van contactpersoon</h2>
-            <Details data={
+            <h2>Attributen van contactpersoon</h2>
+            <Details urlTemplates={urlTemplates} data={
                 [{ key: "Telefoonnummer", value: phonenumber }, { key: "Doel", value: purpose }].concat(
                     disclosed ? disclosed.flat().map(attr => ({ key: attr.id, value: attr.rawvalue })) : []
                 )
