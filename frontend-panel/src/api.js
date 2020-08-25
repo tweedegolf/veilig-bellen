@@ -25,7 +25,7 @@ const initFeed = (backendFeedUrl, feedListeners) => {
         }
         // Try to reconnect
         console.log('Connecting to status feed...');
-        websocket = new WebSocket(`${backendFeedUrl}/agent-feed`);
+        websocket = new WebSocket(`${backendFeedUrl}`);
 
         websocket.onopen = (e) => {
             console.log('Connected to status feed')
