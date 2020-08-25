@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+// Keeps track of whether we have encountered
+// an error with receiving Amazon Connect Metrics before
+var metricError = false;
+
 // Connect poll daemon. To be run in a separate thread.
 // Polls Amazon Connect continuously and sends status updates
 // to all listeners.
@@ -22,8 +26,9 @@ func connectPollDaemon(cfg Configuration) {
 		}
 
 		response, err := cfg.getConnectCurrentMetrics()
-		if err != nil {
+		if !metricError && err != nil {
 			log.Printf("Connect poll could not get Amazon Connect metrics")
+			metricError = true;
 			continue
 		}
 
