@@ -54,7 +54,7 @@ const getDisclosure = async (backendUrl, secret) => {
     }
 };
 
-const App = ({ backendUrl, ccpHost, urlTemplates }) => {
+const App = ({ backendUrl, ccpHost, urlTemplates, metricsUrl }) => {
     const [state, setState] = useState({ mode: 'unauthorized' });
     const [error, setErrorBase] = useState(null);
 
@@ -135,7 +135,7 @@ const App = ({ backendUrl, ccpHost, urlTemplates }) => {
                     <ContactInfo {...state} urlTemplates={urlTemplates} />
                 </Grid>
             </Grid>
-            {process.env.METRICS_URL &&
+            {metricsUrl &&
                 <Box
                     zIndex="tooltip"
                     position="absolute"
@@ -147,7 +147,7 @@ const App = ({ backendUrl, ccpHost, urlTemplates }) => {
                         target="_blank"
                         noopener
                         noreferrer
-                        href={process.env.METRICS_URL}>
+                        href={metricsUrl}>
                         Metrics
                     </Button>
                 </Box>}

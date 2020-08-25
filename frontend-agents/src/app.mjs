@@ -20,5 +20,6 @@ window.addEventListener('load', () => {
         backendUrl={process.env.BACKEND_URL}
         ccpHost={process.env.CCP_HOST}
         urlTemplates={tryParseJSON(process.env.URL_TEMPLATES)}
+        metricsUrl={process.env.METRICS_URL}
     />, container);
 });
