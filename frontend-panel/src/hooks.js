@@ -1,6 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ApiContext } from './contexts.js';
 
+const parseData = (data) => {
+    const {Key, Value} = JSON.parse(data);
+    
+    return {key: Key, value: JSON.parse(Value)}
+}
+
 // Get the currently initialized api handle
 export const useApi = () => useContext(ApiContext)
 
@@ -16,7 +22,7 @@ export const useFeed = ({
     const api = useApi();
 
     const handleMessage = (e) => {
-        const data = e.data && JSON.parse(e.data);
+        const data = e.data && parseData(e.data);
         if (!data) {
             // Data could not be parsed
             return;
@@ -30,7 +36,7 @@ export const useFeed = ({
                 break;
             default:
                 // unregocnized message, pass the event on
-                onMessage && onMessage(e)
+                // onMessage && onMessage(e)
         }
     }
     useEffect(() => {
