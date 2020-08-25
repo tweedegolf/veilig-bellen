@@ -237,6 +237,7 @@ func main() {
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
 	externalMux.HandleFunc("/metrics", cfg.handleMetrics)
 	externalMux.HandleFunc("/session/update", cfg.handleSessionUpdate)
+	externalMux.HandleFunc("/session/destroy", cfg.handleSessionDestroy)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 	externalMux.HandleFunc("/agent-feed", cfg.handleAgentFeed)
 

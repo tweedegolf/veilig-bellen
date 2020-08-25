@@ -323,6 +323,14 @@ func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Requ
 	cfg.db.setStatus(secret, status)
 }
 
+func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Request) {
+	setDefaultHeaders(w)
+
+	secret := r.FormValue("secret")
+
+	log.Printf("Session destroyed: %v", secret);
+}
+
 func (cfg Configuration) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
 
