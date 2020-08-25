@@ -30,8 +30,6 @@ const destroySession = async (backendUrl, secret) => {
         return;
     }
 
-    console.log("Destroying session with secret", secret);
-
     const res = await axios.get(`${backendUrl}/session/destroy`, {
         params: {
             secret,

@@ -325,7 +325,7 @@ func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Requ
 
 func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
-	log.Printf("Destroyin session")
+
 	secret := r.FormValue("secret")
 	cfg.db.destroySession(secret)
 }
