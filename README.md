@@ -206,6 +206,8 @@ You can build your own frontend manually by running:
 
     docker-compose run -e BACKEND_URL="https://foo" -e CCP_HOST="example.awsapps.com" frontend_agents yarn run build
 
+    docker-compose run -e BACKEND_FEED_URL="wss://foo" frontend_panel yarn run build
+
 You can build the public library by running:
 
     docker-compose run frontend_public yarn run prepare

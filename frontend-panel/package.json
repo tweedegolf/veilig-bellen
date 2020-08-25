@@ -1,8 +1,11 @@
 {
   "name": "frontend-panel",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.html",
   "license": "MIT",
+  "scripts": {
+    "build": "NODE_ENV=production parcel build --no-source-maps --out-dir dist src/index.html"
+  },
   "dependencies": {
     "@material-ui/core": "^4.9.11",
     "axios": "^0.19.2",
