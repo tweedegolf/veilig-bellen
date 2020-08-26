@@ -24,7 +24,6 @@ exports.handler = (data, _context, callback) => {
         });
     });
     req.on('error', callback);
-    req.write(querystring.stringify(attributes));
-    req.write(querystring.stringify(parameters));
+    req.write(querystring.stringify({ ...attributes, ...parameters }));
     req.end();
 };
