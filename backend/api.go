@@ -165,6 +165,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 
 	cfg.db.NewFeed(pkg.Token)
 	go cfg.pollIrmaSessionDaemon(pkg.Token)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(sessionJSON)
 }
 
@@ -346,6 +347,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(responseJSON)
 }
 
