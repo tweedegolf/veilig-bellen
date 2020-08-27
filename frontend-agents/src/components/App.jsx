@@ -4,9 +4,13 @@ import axios from 'axios';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Alert from '@material-ui/lab/Alert';
 import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
+
+import Box from '@material-ui/core/Box';
 
 import ContactInfo from './ContactInfo';
 import Ccp from './Ccp';
+
 
 const updateStatus = async (backendUrl, secret, status) => {
     if (!secret) {
@@ -50,7 +54,7 @@ const getDisclosure = async (backendUrl, secret) => {
     }
 };
 
-const App = ({ backendUrl, ccpHost, urlTemplates }) => {
+const App = ({ backendUrl, ccpHost, urlTemplates, metricsUrl }) => {
     const [state, setState] = useState({ mode: 'unauthorized' });
     const [error, setErrorBase] = useState(null);
 
@@ -131,6 +135,22 @@ const App = ({ backendUrl, ccpHost, urlTemplates }) => {
                     <ContactInfo {...state} urlTemplates={urlTemplates} />
                 </Grid>
             </Grid>
+            {metricsUrl &&
+                <Box
+                    zIndex="tooltip"
+                    position="absolute"
+                    right="1rem"
+                    top="1rem" >
+                    <Button
+                        color="primary"
+                        variant="outlined"
+                        target="_blank"
+                        noopener
+                        noreferrer
+                        href={metricsUrl}>
+                        Metrics
+                    </Button>
+                </Box>}
         </CssBaseline>
     );
 };
