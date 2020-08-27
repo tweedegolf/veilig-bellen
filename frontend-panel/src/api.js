@@ -9,7 +9,7 @@ const removeFeedListener = (feedListeners) => (l) => feedListeners.remove(l)
 
 // Initialize a automatically-reconnecting websocket connection
 // to the agent status feed
-const initFeed = (backendHostname, feedListeners) => {
+const initFeed = (backendFeedUrl, feedListeners) => {
     let reconnectInterval = null;
     let websocket = null;
     
@@ -24,8 +24,8 @@ const initFeed = (backendHostname, feedListeners) => {
             }
         }
         // Try to reconnect
-        console.log('Connecting to status feed...');
-        websocket = new WebSocket(`wss://${backendHostname}/agent-feed`);
+        console.log(`Connecting to status feed at ${backendFeedUrl}...`);
+        websocket = new WebSocket(backendFeedUrl);
 
         websocket.onopen = (e) => {
             console.log('Connected to status feed')
@@ -54,11 +54,10 @@ const initFeed = (backendHostname, feedListeners) => {
 }
 
 // Initialize the Api connections, setting up the feed connection.
-export const initApi = () => {
-    const backendHostname = process.env.BACKEND_HOSTNAME;
+export const initApi = (backendFeedUrl) => {
     const feedListeners = [];
 
-    initFeed(backendHostname, feedListeners);
+    initFeed(backendFeedUrl, feedListeners);
 
     return {
         registerFeedListener: registerFeedListener(feedListeners),

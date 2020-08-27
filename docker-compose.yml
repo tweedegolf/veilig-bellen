@@ -116,7 +116,7 @@ services:
     - "src/index.html"
     environment:
     - HOME=/tmp/nodehome
-    - BACKEND_HOSTNAME=backend.veiligbellen.test.tweede.golf
+    - BACKEND_FEED_URL=wss://backend.veiligbellen.test.tweede.golf/agent-feed
     networks:
     - default
     expose: [1234]
