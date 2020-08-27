@@ -33,7 +33,7 @@ type SessionBody struct {
 // CallBody The request body we expect for handleCall
 type CallBody struct {
 	Dtmf      string `json:"dtmf,omitempty"`
-	CallState string `json:"dtmf,omitempty"`
+	CallState string `json:"call_state,omitempty"`
 }
 
 // DiscloseBody The request body we expect for handleDisclose
@@ -129,13 +129,19 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	var body SessionBody
-	err := decoder.Decode(&body)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = SessionBody{
+			Purpose: r.PostFormValue("dtmf"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// This function is responsible for ensuring the irma session secret is
@@ -311,16 +317,21 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	var body CallBody
-	err := decoder.Decode(&body)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = CallBody{
+			Dtmf: r.PostFormValue("dtmf"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
 
-	log.Printf("call_state: %v", body.CallState)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 
 	secret, err := cfg.db.secretFromDTMF(body.Dtmf)
 
@@ -362,13 +373,19 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	var body DiscloseBody
-	err := decoder.Decode(&body)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = DiscloseBody{
+			Secret: r.PostFormValue("secret"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	if body.Secret == "" {
@@ -420,13 +437,20 @@ func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	var body SessionUpdateBody
-	err := decoder.Decode(&body)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = SessionUpdateBody{
+			Secret: r.PostFormValue("secret"),
+			Status: r.PostFormValue("status"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	cfg.db.setStatus(body.Secret, body.Status)
@@ -443,13 +467,19 @@ func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	var body SessionDestroyBody
-	err := decoder.Decode(&body)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = SessionDestroyBody{
+			Secret: r.PostFormValue("secret"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	cfg.db.destroySession(body.Secret)
