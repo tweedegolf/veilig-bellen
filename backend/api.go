@@ -252,12 +252,21 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 // related Amazon Lambda but not from the internet.
 func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	dtmf := r.FormValue("dtmf")
+	callState := r.FormValue("call_state")
+
+	log.Printf("call_state: %v", callState)
+
 	secret, err := cfg.db.secretFromDTMF(dtmf)
+
 	if err == ErrNoRows {
 		http.Error(w, "session not found", http.StatusNotFound)
 	} else if err != nil {
 		log.Printf("failed to retrieve secret from dtmf: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
+	} else if callState == "unavailable" {
+		cfg.db.setStatus(secret, "UNAVAILABLE")
+		log.Printf("Amazon connect was not available")
+		io.WriteString(w, "OK")
 	} else {
 		io.WriteString(w, secret)
 		cfg.db.setStatus(secret, "CALLED")

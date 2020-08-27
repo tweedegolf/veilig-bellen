@@ -23,7 +23,10 @@ const Inner = ({ state }) => {
             return <p>Uw gesprek is voltooid.</p>;
         case 'IRMA-UNREACHABLE':
             return <p>Uw sessie is niet bereikbaar. Mogelijk is deze verlopen.</p>;
+        case 'UNAVAILABLE':
+            return <p>Op dit moment zijn we niet bereikbaar. Probeer het later opnieuw.</p>
         default:
+            console.log(`No content defined for state '${state}', showing error message`)
         case 'ERROR':
             return <p>Er ging iets mis, probeer het opnieuw.</p>;
     }
