@@ -17,8 +17,6 @@ The project consists of a number of components:
 - A public frontend library which provides the user interaction for citizens to make authenticated calls. This library can be embedded in any website. We also provide a demo website that uses this library.
 - An agent frontend which call center agents can use to accept calls and read
   any provided credentials.
-- A panel frontend which shows metrics such as the number of available agents
-  and the number of ongoing calls. This panel can be shown on a screen in the agent call center.
 - An Amazon lambda used to connect Amazon Connect with the backends.
 - A database schema to be used in a PostgreSQL database.
 
@@ -56,8 +54,6 @@ Once setup your can configure the 'Approved origins' in 'Application integration
 
 Under 'Contact flows' you will want to add the Amazon Lambda call you created in the previous section.
 
-Please write down the Amazon Connect instance ARN, specifically the last segment i.e. `503d5d31-de38-4803-bb39-02e98ee8891c`. Also remember which region you created the instance in, i.e. `eu-central-1`.
-
 #### Instance administration
 
 Under 'Overview' you can find your Login URL, i.e. `https://<instanceid>.awsapps.com/connect/login`. Please login using your Admin user.
@@ -87,34 +83,14 @@ Now save and publish this contact flow.
 
 When creating a phone number you can couple the aforementioned contact flow. Please write down your chosen phone number.
 
-#### Queue
-
-To display the metrics on the status panel frontend please go to your aforementioned queue and fetch the identifier from last part of the page URL, i.e. `f3860ab3-8305-4862-940e-9f6b608f9530`.
-
-### Amazon IAM
-
-In order to fetch call and queue statistics from Amazon Connect we require an Amazon API user to access the Amazon Connect API. This user requires the `AmazonConnectReadOnlyAccess` policy, or the `Connect` `list` and `read` permissions.
-
-Remember the `ID` and `SECRET` belonging to this user and set them as a file under `bin/env.sh` as follows:
-
-```bash
-export BACKEND_CONNECT_ID=AKIA0000000000000000
-export BACKEND_CONNECT_SECRET=?
-```
-
-This file is already added to `.gitignore`, and thus there is no danger of committing it to the repository. In your local terminal, run `source bin/env.sh` to set these variables. If you do not use bash you will have to change your environment appropriately.
-
 ### Docker-compose
 
 In order to run the development project you require `docker` (version 19.03) and `docker-compose` (version 1.25) installed. It has been tested to work on any plain Ubuntu 18.04.1 LTS.
 `docker-compose.yml` defines a cluster consisting of the three
 frontends, any number of backends, a Postgres server, an IRMA server and an
-Nginx server. You will need to adapt the `docker-compose.yml` file to your situation. Given a registered phone number coupled to your contact flow, and the aforementioned Amazon Connect instance id, region and queue id, you will need to set it up in `docker-compose.yml` under:
+Nginx server. You will need to adapt the `docker-compose.yml` file to your situation. Given a registered phone number coupled to your contact flow, you will need to set it up in `docker-compose.yml` under:
 
     - BACKEND_PHONENUMBER=+318000123456
-    - BACKEND_CONNECT_INSTANCEID=503d5d31-de38-4803-bb39-02e98ee8891c
-    - BACKEND_CONNECT_QUEUE=f3860ab3-8305-4862-940e-9f6b608f9530
-    - BACKEND_CONNECT_REGION=eu-central-1
 
 Also you need to set up the `frontend_agents` service using your connect ID:
 
@@ -192,9 +168,6 @@ Now we are ready to actually test and use the project. Because we employ self-si
 ![Agents frontend - incoming call](doc/agents-incoming.png)
 ---
 8. Pick up the call and have a conversation with yourself.
-9. Finally you can view the state of the Veilig Bellen system in the status panel:
-
-    <https://panel.veiligbellen.test.tweede.golf/>
 
 ## Manual build frontends
 
