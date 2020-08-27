@@ -111,9 +111,10 @@ const App = ({ backendUrl, ccpHost }) => {
         setState(state => {
             try {
                 destroySession(backendUrl, state.secret);
-            } finally {
-                return { mode: 'idle' };
+            } catch (e) {
+                console.error(e);
             }
+            return { mode: 'idle' };
         })
     };
 
