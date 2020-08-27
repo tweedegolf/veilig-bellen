@@ -196,7 +196,7 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	statusToken := r.FormValue("statusToken")
 	if statusToken == "" {
-		http.Error(w, "No status token passed", http.StatusBadRequest)
+		http.Error(w, "no statusToken passed", http.StatusBadRequest)
 		return
 	}
 
@@ -206,7 +206,7 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 
 	status, err := cfg.db.getStatus(statusToken)
 	if err != nil {
-		http.Error(w, "unknown token", http.StatusNotFound)
+		http.Error(w, "unknown session", http.StatusNotFound)
 		return
 	}
 
