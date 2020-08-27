@@ -141,6 +141,9 @@ func main() {
 	if cfg.ListenAddress == "" {
 		panic("option required: listen-address")
 	}
+	if cfg.InternalAddress == "" {
+		panic("option required: internal-address")
+	}
 	if cfg.IrmaServer == "" {
 		panic("option required: irma-server")
 	}
