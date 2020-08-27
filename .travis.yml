@@ -22,6 +22,8 @@ deploy:
   script: bash bin/docker_push.sh
   on:
     repo: tweedegolf/veilig-bellen
+    tags: true
+  skip_cleanup: 'true'
 env:
   global:
   - secure: niTmVx6e8f0naXOtDCgZ4i+LnuzvxNNdjXBjlsPMAi/ZdnSOXzOfHhIm9GokQE1+EVKjccDyXH1zcTRykx1BwTolP7D08ceRwVyRwvsZ/+9ufBtU5UfXAbjK5KxcxDbDKE9UfLtsXMJoS/M0QKD/2yS3UT4LycmWsVdzInozgEpeCsXkS443yWPPwb7sGjXatV+HLjduHjJ3oOinEpHD5TfxJJSumjZtNp7IQqfoBNi4C3s4XIaEGHkWq4k1Q5Fki76d+S+MsZzrisS2vIqEDcLJH9x8sBx32BffDEOunyRsEan+ZJa977vbViLQBV6pYuaJgOKhGplhJ/WPf7D8C53OcUmXOZGC9qeOR9n7tb3hSsiZCFtjxOPaRYVmDKY1zCikhjYnJtzhoTF1lBEdiKXuecTnPgAE500wVYpl4ALmsVGHDZfN36UtbtrQKXi+FZK6eFFACXbmBrkxUKWtJJqR95nfoYdeSQJzQn3JQxANXF1R/4Ov/suaa3zfi/iROp2aTHxi+Zv2WrDiaJRAfObp3dYks8cuynr2yawh2j7WUBMA70DlOa+ARQVk02rZ8GC7lY+AVohWdtCcpZTYpr+x4K0+ja0vpyho/kfwJ0geXEkYtcIdcna8Alckk2pc1wqN+epM1mdApnTmnmVekmPKLbgvke8vIeR4xs60aBM=

@@ -1,10 +1,12 @@
 {
 	"database": "postgres://irmabellen:irmabellen@localhost/irmabellen?sslmode=disable",
 	"listen-address": ":8080",
+	"internal-address": ":8081",
 	"irma-server": "http://localhost:8088",
 	"phone-number": "+31123456789",
 	"purpose-map": {
 		"foo": [[["irma-demo.MijnOverheid.root.BSN"]]]
 	},
-	"irma-external-url": "http://irma.veiligbellen.test.tweede.golf"
+	"irma-external-url": "http://irma.veiligbellen.test.tweede.golf",
+	"allowed-origins": ["http://public.veiligbellen.test.tweede.golf", "https://agents.veiligbellen.test.tweede.golf"]
 }

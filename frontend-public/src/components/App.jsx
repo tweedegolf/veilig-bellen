@@ -5,15 +5,17 @@ import axios from 'axios';
 import { handleSession, detectUserAgent } from '@privacybydesign/irmajs';
 
 import Inner from './Inner';
+import { initFeed } from '../feed';
 
 // States for which we should not render the popup
 const hiddenStates = [
-    'INIT', 'IRMA-INITIALIZED', 
+    'INIT', 'IRMA-INITIALIZED',
 ]
 
 const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
     const [state, setState] = useState('INIT');
     const [closing, setClosing] = useState(false);
+    const [feed, setFeed] = useState(null);
 
     const getUserAgent = useCallback(detectUserAgent, []);
     const isHidden = useCallback(() => hiddenStates.includes(state), [state]);
@@ -25,7 +27,33 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
             return;
         }
         setClosing(true);
+        if(feed) {
+            feed.closeFeed();
+        }
         onClose();
+    }
+
+    const setupFeed = (statusToken) => {
+        if(feed) {
+            feed.closeFeed();
+        }
+
+        const feedListener = {
+            onError: (error) => {
+                console.error('Connect Error: ', error);
+                setError();
+            },
+            onMessage: (event) => {
+                if (event.data !== '') {
+                    setState(event.data);
+                    console.log('Message', event.data);
+                }
+            },
+            onConnect: () => console.log('Connection Established')
+        };
+        const feed = initFeed(`wss://${hostname}/session/status?statusToken=${encodeURIComponent(statusToken)}`);
+        setFeed(feed);
+        feed.registerFeedListener(feedListener);
     }
 
     const onStartSession = async () => {
@@ -38,25 +66,7 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
             }
 
             const { sessionPtr, statusToken } = response.data;
-
-            const client = new WebSocket(`wss://${hostname}/session/status?statusToken=${encodeURIComponent(statusToken)}`);
-
-            client.addEventListener('error', (error) => {
-                console.error('Connect Error: ', error);
-                setError();
-            });
-
-            client.addEventListener('open', () => {
-                console.log('Connection established');
-            });
-
-            client.addEventListener('message', (event) => {
-                if (event.data !== '') {
-                    setState(event.data);
-                    console.log('Message', event.data);
-                }
-            });
-
+            setupFeed(statusToken);
 
             const language = irmaJsLang || 'en';
             await handleSession(sessionPtr, { language });
