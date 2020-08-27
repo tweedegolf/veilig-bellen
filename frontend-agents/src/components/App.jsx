@@ -25,6 +25,22 @@ const updateStatus = async (backendUrl, secret, status) => {
     }
 };
 
+const destroySession = async (backendUrl, secret) => {
+    if (!secret) {
+        return;
+    }
+
+    const res = await axios.get(`${backendUrl}/session/destroy`, {
+        params: {
+            secret,
+        },
+    });
+
+    if (res.status !== 200) {
+        throw new Error("Failed to destroy session");
+    }
+}
+
 const getDisclosure = async (backendUrl, secret) => {
     const response = await axios.get(`${backendUrl}/disclose`, { params: { secret } });
     if (response.status === 200) {
@@ -87,8 +103,19 @@ const App = ({ backendUrl, ccpHost, urlTemplates }) => {
         // When contact has disconnected, go back to idle.
         setState(state => {
             updateStatus(backendUrl, state.secret, 'DONE');
-            return { mode: 'idle' };
+            return { ...state, mode: 'disconnected' };
         });
+    };
+
+    const onDestroy = () => {
+        setState(state => {
+            try {
+                destroySession(backendUrl, state.secret);
+            } catch (e) {
+                console.error(e);
+            }
+            return { mode: 'idle' };
+        })
     };
 
     return (
@@ -98,7 +125,7 @@ const App = ({ backendUrl, ccpHost, urlTemplates }) => {
             {state.mode === 'unauthorized' && (<Alert severity="warning">You are yet unauthorized and are required to log in using the pop-up.</Alert>)}
             <Grid container spacing={2}>
                 <Grid className="contactinfo" item xs={6}>
-                    <Ccp {...{ setError, onAgent, onContact, onConnect, onDisconnect, ccpHost }} />
+                    <Ccp {...{ setError, onAgent, onContact, onConnect, onDisconnect, onDestroy, ccpHost }} />
                 </Grid>
                 <Grid className="contactinfo" item xs={6}>
                     <ContactInfo {...state} urlTemplates={urlTemplates} />
