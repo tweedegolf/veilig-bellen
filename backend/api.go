@@ -62,10 +62,6 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 	return request, nil
 }
 
-func setDefaultHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-}
-
 // Check if the service is still healthy and yield 200 OK if so.
 func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "HEAD" {
@@ -95,7 +91,6 @@ func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 // object with a valid Irma session response with a tel return url containing
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
 		return
@@ -205,7 +200,6 @@ func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
 	if r.Method != "GET" {
 		http.Error(w, "must use GET", http.StatusMethodNotAllowed)
 		return
@@ -306,7 +300,6 @@ type DiscloseResponse struct {
 // attributes are not yet available, we synchronously poll the IRMA server to
 // get them.
 func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
 		return
@@ -352,7 +345,6 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
 		return
@@ -364,7 +356,6 @@ func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Requ
 }
 
 func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
 		return

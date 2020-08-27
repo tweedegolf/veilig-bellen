@@ -65,6 +65,7 @@ services:
     - BACKEND_IRMAHEADERVALUE=12345
     - BACKEND_PHONENUMBER=+318000201001
     - BACKEND_PURPOSEMAP={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}
+    - BACKEND_ALLOWEDORIGINS=["http://public.veiligbellen.test.tweede.golf", "https://agents.veiligbellen.test.tweede.golf"]
     ports: ["127.0.0.1:8080:8080"]
     expose: [8080]
 
