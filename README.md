@@ -31,7 +31,7 @@ As this project is dependent on Amazon Connect, you will require a live Amazon C
 We generally rent a VPS with a public-facing IP-address and use a SSH reverse proxy:
 
 ```bash
-ssh irma-proxy@<host> -N -R 8080:localhost:8080
+ssh irma-proxy@<host> -N -R 8080:localhost:8081
 ```
 
 Or you can poke a hole through your local firewall and forward traffic to your local development machine.

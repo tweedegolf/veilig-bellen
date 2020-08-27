@@ -208,6 +208,16 @@ func main() {
 
 	log.Printf("Registered polling processes")
 
+	internalMux := http.NewServeMux()
+	internalMux.HandleFunc("/call", cfg.handleCall)
+	internalHandler := cors.Default().Handler(internalMux)
+	internalServer := http.Server{
+		Addr:    cfg.InternalAddress,
+		Handler: internalHandler,
+	}
+	go internalServer.ListenAndServe()
+	log.Printf("Started internal HTTP server on %v", cfg.InternalAddress)
+
 	externalMux := http.NewServeMux()
 	externalMux.HandleFunc("/", cfg.handleStatus)
 	externalMux.HandleFunc("/session", cfg.handleSession)
@@ -216,20 +226,6 @@ func main() {
 	externalMux.HandleFunc("/session/destroy", cfg.handleSessionDestroy)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 
-	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
-		internalMux := http.NewServeMux()
-		internalMux.HandleFunc("/call", cfg.handleCall)
-		internalHandler := cors.Default().Handler(internalMux)
-
-		internalServer := http.Server{
-			Addr:    cfg.InternalAddress,
-			Handler: internalHandler,
-		}
-		go internalServer.ListenAndServe()
-		log.Printf("Started internal HTTP server on %v", cfg.InternalAddress)
-	} else {
-		externalMux.HandleFunc("/call", cfg.handleCall)
-	}
 	externalHandler := cors.New(cors.Options{
 		AllowedOrigins: cfg.AllowedOrigins,
 	}).Handler(externalMux)

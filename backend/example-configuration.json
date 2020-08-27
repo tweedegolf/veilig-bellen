@@ -1,6 +1,7 @@
 {
 	"database": "postgres://irmabellen:irmabellen@localhost/irmabellen?sslmode=disable",
 	"listen-address": ":8080",
+	"internal-address": ":8081",
 	"irma-server": "http://localhost:8088",
 	"phone-number": "+31123456789",
 	"purpose-map": {
