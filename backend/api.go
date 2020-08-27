@@ -383,8 +383,13 @@ func (cfg Configuration) handleAgentFeed(w http.ResponseWriter, r *http.Request)
 		if update.Key != "amazon-connect" {
 			continue
 		}
+		msg, err := json.Marshal(update);
 
-		err = ws.WriteMessage(websocket.TextMessage, []byte(update.Value))
+		if err != nil {
+			break
+		}
+
+		err = ws.WriteMessage(websocket.TextMessage, []byte(msg))
 		if err != nil {
 			break
 		}

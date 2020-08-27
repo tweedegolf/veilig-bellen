@@ -36,7 +36,6 @@ const Panel = () => {
         onConnect: () => setState(s => ({ ...s, connected: true, error: false })),
         onMessage: e => console.log('Unrecognized message', e),
         onDisconnect: () => setState(s => ({ ...s, connected: false })),
-        onSessionCount: d => setState(s => ({ ...s, sessionCount: d.count })),
         onConnectStatus: handleConnectStatus(u => setState(s => ({ ...s, connectStatus: { ...s.connectStatus, ...u } }))),
         onError: e => setState(s => ({ ...s, error: e }))
     });
@@ -57,7 +56,6 @@ const Panel = () => {
         <Container maxWidth="md">
             <Box component="div" className="status-panel">
                 <Grid container spacing={3}>
-                    <PanelItem title="Active Irma sessions" value={state.sessionCount} />
                     {state.connectStatus && (<>
                         <PanelItem title="Agents online" value={state.connectStatus.agentsOnline} />
                         <PanelItem title="Agents available" value={state.connectStatus.agentsAvailable} />
