@@ -13,6 +13,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.4 // indirect
 	github.com/jasonlvhit/gocron v0.0.0-20191228163020-98b59b546dee // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
@@ -23,8 +24,6 @@ require (
 	github.com/timshannon/bolthold v0.0.0-20200308034358-09aaf76b2c32 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
-	github.com/aws/aws-sdk-go v1.30.7
-	github.com/kelseyhightower/envconfig v1.4.0
 )
 
 replace astuart.co/go-sse => github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d
