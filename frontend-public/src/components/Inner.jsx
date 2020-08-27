@@ -10,7 +10,7 @@ const Inner = ({ state }) => {
                 <h2>U kunt ons nu beveiligd bellen met uw mobiele telefoon</h2>
                 <p>
                     We hebben uw gegevens correct ontvangen. U kunt nu met ons bellen via de IRMA-app.<br />
-                    Nadat u op 'bellen' heeft gedrukt hoort u eerst enkele tonen. Daarna bent u verbonden en staat u in de wachtrij. <br />
+                    Nadat u op 'doorgaan' heeft gedrukt hoort u eerst enkele tonen. Daarna bent u verbonden en staat u in de wachtrij. <br />
                 </p>
                 <p>We nemen zo spoedig mogelijk op.</p>
 
@@ -23,7 +23,10 @@ const Inner = ({ state }) => {
             return <p>Uw gesprek is voltooid.</p>;
         case 'IRMA-UNREACHABLE':
             return <p>Uw sessie is niet bereikbaar. Mogelijk is deze verlopen.</p>;
+        case 'UNAVAILABLE':
+            return <p>Op dit moment zijn we niet bereikbaar. Probeer het later opnieuw.</p>
         default:
+            console.log(`No content defined for state '${state}', showing error message`)
         case 'ERROR':
             return <p>Er ging iets mis, probeer het opnieuw.</p>;
     }

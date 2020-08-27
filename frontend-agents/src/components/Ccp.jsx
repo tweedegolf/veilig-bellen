@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 
 import 'amazon-connect-streams';
 
-const Ccp = ({ setError, onContact, onAgent, onConnect, onDisconnect, ccpHost }) => {
+const Ccp = ({ setError, onContact, onAgent, onConnect, onDisconnect, onDestroy, ccpHost }) => {
     const ccpUrl = `https://${ccpHost}/connect/ccp-v2`;
 
     const containerRef = useCallback(element => {
@@ -25,17 +25,16 @@ const Ccp = ({ setError, onContact, onAgent, onConnect, onDisconnect, ccpHost })
                 setError("Failed to authenticate, please log in using the popup.");
             });
 
-            connect.agent((_agent) => {
-                onAgent();
-            });
+            connect.agent((_agent) => void onAgent());
 
             connect.contact(async (contact) => {
                 console.log('contact', contact);
 
                 const callAttributes = contact.getAttributes();
 
-                contact.onConnected(() => { onConnect(); });
-                contact.onEnded(() => { onDisconnect(); });
+                contact.onConnected(() => void onConnect());
+                contact.onEnded(() => void onDisconnect());
+                contact.onDestroy(() => void onDestroy());
 
                 onContact(callAttributes.session_secret.value, callAttributes.phonenumber.value);
             });

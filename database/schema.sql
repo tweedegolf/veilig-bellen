@@ -6,6 +6,9 @@ CREATE TABLE sessions (
 	secret text,
 	-- DTMF code used to connect the corresponding call.
 	dtmf text UNIQUE NOT NULL,
+	-- The status token grants permission to retrieve the session status,
+	-- but not to any disclosed attributes.
+	status_token text UNIQUE NOT NULL,
 	-- Identifier for the call purpose of this session.
 	purpose text,
 	-- The IRMA attributes that were disclosed.
