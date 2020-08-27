@@ -21,12 +21,22 @@ body {
 .ccp {
     height: calc(100vh - 8rem);
     background-color: gray;
-
+    overflow: hidden;
+    
     iframe {
         border: none;
         width : 135% !important;
         height: 135% !important;
         transform: scale(0.75);
         transform-origin: 0 0;
+    }
+
+    @media only screen and (max-height: 550px){
+        iframe {
+            width : 166.6% !important;
+            height: 166.6% !important;
+            transform: scale(0.6);
+            transform-origin: 0 0;
+        }
     }
 }
