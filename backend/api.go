@@ -103,7 +103,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 
 	// This function is responsible for ensuring the irma session secret is
 	// stored in the database before it returns the QR code to the user.
-	purpose := r.FormValue("purpose")
+	purpose := r.PostFormValue("purpose")
 	dtmf, statusToken, err := cfg.db.NewSession(purpose)
 	if err != nil {
 		log.Print(err)
@@ -270,8 +270,8 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtmf := r.FormValue("dtmf")
-	callState := r.FormValue("call_state")
+	dtmf := r.PostFormValue("dtmf")
+	callState := r.PostFormValue("call_state")
 
 	log.Printf("call_state: %v", callState)
 
@@ -311,7 +311,7 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	secret := r.FormValue("secret")
+	secret := r.PostFormValue("secret")
 	if secret == "" {
 		http.Error(w, "disclosure needs secret", http.StatusBadRequest)
 		return
@@ -356,8 +356,8 @@ func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	secret := r.FormValue("secret")
-	status := r.FormValue("status")
+	secret := r.PostFormValue("secret")
+	status := r.PostFormValue("status")
 	cfg.db.setStatus(secret, status)
 }
 
@@ -368,6 +368,6 @@ func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	secret := r.FormValue("secret")
+	secret := r.PostFormValue("secret")
 	cfg.db.destroySession(secret)
 }
