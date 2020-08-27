@@ -7,7 +7,7 @@ const Inner = ({ state }) => {
             return <p>Volg de instructie in de IRMA interactie.</p>;
         case 'IRMA-DONE':
             return <Fragment>
-                <h2>U kunt ons nu beveiligd bellen met uw mobiele telefoon</h2>
+                <h2>Wij kunnen u nu identificeren als u belt met uw mobiele telefoon</h2>
                 <p>
                     We hebben uw gegevens correct ontvangen. U kunt nu met ons bellen via de IRMA-app.<br />
                     Nadat u op 'doorgaan' heeft gedrukt hoort u eerst enkele tonen. Daarna bent u verbonden en staat u in de wachtrij. <br />
