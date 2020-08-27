@@ -343,11 +343,10 @@ func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
 	} else if body.CallState == "unavailable" {
 		cfg.db.setStatus(secret, "UNAVAILABLE")
 		log.Printf("Amazon connect was not available")
-		io.WriteString(w, "OK")
-	} else {
 		io.WriteString(w, secret)
+	} else {
 		cfg.db.setStatus(secret, "CALLED")
-		log.Printf("someone called %v", secret)
+		io.WriteString(w, secret)
 	}
 }
 
