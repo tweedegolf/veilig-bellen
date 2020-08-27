@@ -72,6 +72,7 @@ services:
     - BACKEND_CONNECT_INSTANCEID=503d5d31-de38-4803-bb39-02e98ee8891c
     - BACKEND_CONNECT_QUEUE=f3860ab3-8305-4862-940e-9f6b608f9530
     - BACKEND_CONNECT_REGION=eu-central-1
+    - BACKEND_ALLOWED_ORIGINS=["public.veiligbellen.test.tweede.golf"]
     ports: ["127.0.0.1:8080:8080"]
     expose: [8080]
 

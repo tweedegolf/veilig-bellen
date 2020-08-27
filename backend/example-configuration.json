@@ -6,5 +6,6 @@
 	"purpose-map": {
 		"foo": [[["irma-demo.MijnOverheid.root.BSN"]]]
 	},
-	"irma-external-url": "http://irma.veiligbellen.test.tweede.golf"
+	"irma-external-url": "http://irma.veiligbellen.test.tweede.golf",
+	"allowed-origins": ["public.veiligbellen.test.tweede.golf"]
 }
