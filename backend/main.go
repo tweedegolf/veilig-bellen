@@ -33,7 +33,7 @@ type BaseConfiguration struct {
 	IrmaExternalURL string `json:"irma-external-url,omitempty"`
 	PhoneNumber     string `json:"phone-number,omitempty"`
 	PurposeMap      string `json:"purpose-map,omitempty"`
-	AllowedOrigins  string  `json:"allowed-origins,omitempty"`
+	AllowedOrigins  string `json:"allowed-origins,omitempty"`
 }
 
 type Configuration struct {
@@ -74,9 +74,8 @@ func resolveConfiguration(base BaseConfiguration) Configuration {
 			panic(fmt.Sprintf("could not parse allowed origins: %v", err))
 		}
 	} else {
-		cfg.AllowedOrigins = []string{"public.veiligbellen.test.tweede.golf"}
+		cfg.AllowedOrigins = []string{"*"}
 	}
-
 	return cfg
 }
 
@@ -220,16 +219,17 @@ func main() {
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()
 		internalMux.HandleFunc("/call", cfg.handleCall)
+		internalHandler := cors.Default().Handler(internalMux)
+
 		internalServer := http.Server{
 			Addr:    cfg.InternalAddress,
-			Handler: internalMux,
+			Handler: internalHandler,
 		}
 		go internalServer.ListenAndServe()
 		log.Printf("Started internal HTTP server on %v", cfg.InternalAddress)
 	} else {
 		externalMux.HandleFunc("/call", cfg.handleCall)
 	}
-	log.Printf("Allowed origins: %v", cfg.AllowedOrigins)
 	externalHandler := cors.New(cors.Options{
 		AllowedOrigins: cfg.AllowedOrigins,
 	}).Handler(externalMux)
