@@ -20,6 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/privacybydesign/gabi v0.0.0-20200306134149-18dd7a01d765 // indirect
 	github.com/privacybydesign/irmago v0.0.0-20200306135745-b0ce9a706e71
+	github.com/rs/cors v1.7.0
 	github.com/spf13/pflag v1.0.4-0.20190111213756-a45bfec10d59
 	github.com/timshannon/bolthold v0.0.0-20200308034358-09aaf76b2c32 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect

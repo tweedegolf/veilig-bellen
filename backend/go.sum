@@ -122,6 +122,8 @@ github.com/privacybydesign/gabi v0.0.0-20200306134149-18dd7a01d765 h1:J6wQ8s9nPj
 github.com/privacybydesign/gabi v0.0.0-20200306134149-18dd7a01d765/go.mod h1:ffZGdW6+ivG4PB4DnlbZu2OOaVFyv4xlKEwsOWBeLQw=
 github.com/privacybydesign/irmago v0.0.0-20200306135745-b0ce9a706e71 h1:/i7DlA/P1io9TAQ6BXuL6sfR559jxc4M3IW99sF4shc=
 github.com/privacybydesign/irmago v0.0.0-20200306135745-b0ce9a706e71/go.mod h1:xsJZPAp4mtGSUQLFdfhTgcxU0PfRrI4ZVC3APDF49G0=
+github.com/rs/cors v1.7.0 h1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=
+github.com/rs/cors v1.7.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
 github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d h1:XwKXy5OPmsOiNCJ1/ENs1+2J/6weBmYaxTGOtecKchk=
 github.com/sietseringers/go-sse v0.0.0-20200223201439-6cc042ab6f6d/go.mod h1:W/QHK9G0i5yrmHvej5+hhoFMXTSZIWHGQRcpbGgqV9s=
 github.com/sietseringers/pflag v1.0.4-0.20190111213756-a45bfec10d59 h1:8T2zVJpVz08QuVeA48vjOn6t58jvDAQVHXuxTSR2154=

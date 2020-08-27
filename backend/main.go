@@ -14,6 +14,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/lib/pq"
+	cors "github.com/rs/cors"
 	flag "github.com/spf13/pflag"
 )
 
@@ -32,6 +33,7 @@ type BaseConfiguration struct {
 	IrmaExternalURL string `json:"irma-external-url,omitempty"`
 	PhoneNumber     string `json:"phone-number,omitempty"`
 	PurposeMap      string `json:"purpose-map,omitempty"`
+	AllowedOrigins  string `json:"allowed-origins,omitempty"`
 }
 
 type Configuration struct {
@@ -46,6 +48,7 @@ type Configuration struct {
 	PurposeMap      map[string]irma.AttributeConDisCon
 	db              Database
 	broadcaster     Broadcaster
+	AllowedOrigins  []string
 }
 
 func resolveConfiguration(base BaseConfiguration) Configuration {
@@ -65,7 +68,14 @@ func resolveConfiguration(base BaseConfiguration) Configuration {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
 	}
-
+	if base.AllowedOrigins != "" {
+		err := json.Unmarshal([]byte(base.AllowedOrigins), &cfg.AllowedOrigins)
+		if err != nil {
+			panic(fmt.Sprintf("could not parse allowed origins: %v", err))
+		}
+	} else {
+		cfg.AllowedOrigins = []string{"*"}
+	}
 	return cfg
 }
 
@@ -82,6 +92,7 @@ func main() {
 	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
+	allowedOrigins := flag.String("allowed-origins", "", "The origins that are allowed. Defaults to [\"*\"], which allows all origins")
 
 	flag.Parse()
 
@@ -131,6 +142,9 @@ func main() {
 	}
 	if *purposeMap != "" {
 		baseCfg.PurposeMap = *purposeMap
+	}
+	if *allowedOrigins != "" {
+		baseCfg.AllowedOrigins = *allowedOrigins
 	}
 
 	cfg := resolveConfiguration(baseCfg)
@@ -196,9 +210,10 @@ func main() {
 
 	internalMux := http.NewServeMux()
 	internalMux.HandleFunc("/call", cfg.handleCall)
+	internalHandler := cors.Default().Handler(internalMux)
 	internalServer := http.Server{
 		Addr:    cfg.InternalAddress,
-		Handler: internalMux,
+		Handler: internalHandler,
 	}
 	go internalServer.ListenAndServe()
 	log.Printf("Started internal HTTP server on %v", cfg.InternalAddress)
@@ -211,9 +226,13 @@ func main() {
 	externalMux.HandleFunc("/session/destroy", cfg.handleSessionDestroy)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
 
+	externalHandler := cors.New(cors.Options{
+		AllowedOrigins: cfg.AllowedOrigins,
+	}).Handler(externalMux)
+
 	externalServer := http.Server{
 		Addr:    cfg.ListenAddress,
-		Handler: externalMux,
+		Handler: externalHandler,
 	}
 	log.Printf("Starting external HTTP server on %v", cfg.ListenAddress)
 	log.Fatal(externalServer.ListenAndServe())

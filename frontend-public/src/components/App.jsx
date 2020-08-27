@@ -58,7 +58,7 @@ const App = ({ hostname, purpose, onClose, irmaJsLang }) => {
 
     const onStartSession = async () => {
         try {
-            const response = await axios.get(`https://${hostname}/session`, { params: { purpose } });
+            const response = await axios.post(`https://${hostname}/session`, { purpose });
 
             if (response.status !== 200) {
                 setError();

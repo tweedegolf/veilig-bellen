@@ -25,6 +25,33 @@ type Secret = string
 // A StatusToken allows only retrieving the status of a session.
 type StatusToken = string
 
+// SessionBody The request body we expect for handleSession
+type SessionBody struct {
+	Purpose string `json:"purpose,omitempty"`
+}
+
+// CallBody The request body we expect for handleCall
+type CallBody struct {
+	Dtmf      string `json:"dtmf,omitempty"`
+	CallState string `json:"call_state,omitempty"`
+}
+
+// DiscloseBody The request body we expect for handleDisclose
+type DiscloseBody struct {
+	Secret string `json:"secret,omitempty"`
+}
+
+// SessionUpdateBody The request body we expect for handleSessionUpdate
+type SessionUpdateBody struct {
+	Secret string `json:"secret,omitempty"`
+	Status string `json:"status,omitempty"`
+}
+
+// SessionDestroyBody The request body we expect for handleSessionDestroy
+type SessionDestroyBody struct {
+	Secret string `json:"secret,omitempty"`
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -62,20 +89,24 @@ func (cfg Configuration) irmaRequest(purpose string, dtmf string) (irma.Requesto
 	return request, nil
 }
 
-func setDefaultHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-}
-
 // Check if the service is still healthy and yield 200 OK if so.
 func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" && r.Method != "HEAD" {
+		http.Error(w, "must use GET", http.StatusMethodNotAllowed)
+		return
+	}
+
 	_, err := cfg.db.activeSessionCount()
 
 	if err != nil {
+		log.Printf("failed to access database: %v", err)
 		http.Error(w, "503 upstream down", http.StatusServiceUnavailable)
 		return
 	}
 
-	io.WriteString(w, "200 OK")
+	if r.Method == "GET" {
+		io.WriteString(w, "200 OK")
+	}
 }
 
 // A citizen pressed the call with Irma button on a page on the Gemeente
@@ -87,19 +118,42 @@ func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 // object with a valid Irma session response with a tel return url containing
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
+	if r.Method == "OPTIONS" {
+		// Allow OPTIONS for CORS pre-flight, but do nothing
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+
+	}
+
+	var body SessionBody
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = SessionBody{
+			Purpose: r.PostFormValue("dtmf"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 
 	// This function is responsible for ensuring the irma session secret is
 	// stored in the database before it returns the QR code to the user.
-	purpose := r.FormValue("purpose")
-	dtmf, statusToken, err := cfg.db.NewSession(purpose)
+	dtmf, statusToken, err := cfg.db.NewSession(body.Purpose)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	request, err := cfg.irmaRequest(purpose, dtmf)
+	request, err := cfg.irmaRequest(body.Purpose, dtmf)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -153,6 +207,7 @@ func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 
 	cfg.db.NewFeed(pkg.Token)
 	go cfg.pollIrmaSessionDaemon(pkg.Token)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(sessionJSON)
 }
 
@@ -192,7 +247,10 @@ func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
 // Upgrade connection to websocket, start polling IRMA session,
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
+	if r.Method != "GET" {
+		http.Error(w, "must use GET", http.StatusMethodNotAllowed)
+		return
+	}
 
 	statusToken := r.FormValue("statusToken")
 	if statusToken == "" {
@@ -249,19 +307,40 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 // This handler should only be exposed on an internal port, reachable from the
 // related Amazon Lambda but not from the internet.
 func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
-	dtmf := r.FormValue("dtmf")
-	callState := r.FormValue("call_state")
+	if r.Method == "OPTIONS" {
+		// Allow OPTIONS for CORS pre-flight, but do nothing
+		return
+	}
 
-	log.Printf("call_state: %v", callState)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
 
-	secret, err := cfg.db.secretFromDTMF(dtmf)
+	var body CallBody
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = CallBody{
+			Dtmf: r.PostFormValue("dtmf"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	secret, err := cfg.db.secretFromDTMF(body.Dtmf)
 
 	if err == ErrNoRows {
 		http.Error(w, "session not found", http.StatusNotFound)
 	} else if err != nil {
 		log.Printf("failed to retrieve secret from dtmf: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
-	} else if callState == "unavailable" {
+	} else if body.CallState == "unavailable" {
 		cfg.db.setStatus(secret, "UNAVAILABLE")
 		log.Printf("Amazon connect was not available")
 		io.WriteString(w, "OK")
@@ -279,20 +358,42 @@ type DiscloseResponse struct {
 	Disclosed json.RawMessage `json:"disclosed"`
 }
 
-// An agent frontend has accepted a call and sends us a GET request with the
+// An agent frontend has accepted a call and sends us a POST request with the
 // associated secret. We respond with the disclosed attributes. If the disclosed
 // attributes are not yet available, we synchronously poll the IRMA server to
 // get them.
 func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
+	if r.Method == "OPTIONS" {
+		// Allow OPTIONS for CORS pre-flight, but do nothing
+		return
+	}
 
-	secret := r.FormValue("secret")
-	if secret == "" {
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body DiscloseBody
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = DiscloseBody{
+			Secret: r.PostFormValue("secret"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if body.Secret == "" {
 		http.Error(w, "disclosure needs secret", http.StatusBadRequest)
 		return
 	}
 
-	purpose, disclosed, err := cfg.db.getDisclosed(secret)
+	purpose, disclosed, err := cfg.db.getDisclosed(body.Secret)
 	if err == ErrNoRows {
 		// invalid or expired secret
 		http.Error(w, "session not found", http.StatusNotFound)
@@ -321,20 +422,65 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(responseJSON)
 }
 
 func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
+	if r.Method == "OPTIONS" {
+		// Allow OPTIONS for CORS pre-flight, but do nothing
+		return
+	}
 
-	secret := r.FormValue("secret")
-	status := r.FormValue("status")
-	cfg.db.setStatus(secret, status)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body SessionUpdateBody
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = SessionUpdateBody{
+			Secret: r.PostFormValue("secret"),
+			Status: r.PostFormValue("status"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	cfg.db.setStatus(body.Secret, body.Status)
 }
 
 func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Request) {
-	setDefaultHeaders(w)
+	if r.Method == "OPTIONS" {
+		// Allow OPTIONS for CORS pre-flight, but do nothing
+		return
+	}
 
-	secret := r.FormValue("secret")
-	cfg.db.destroySession(secret)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body SessionDestroyBody
+	if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		body = SessionDestroyBody{
+			Secret: r.PostFormValue("secret"),
+		}
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&body)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	cfg.db.destroySession(body.Secret)
 }
