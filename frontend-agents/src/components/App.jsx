@@ -109,8 +109,11 @@ const App = ({ backendUrl, ccpHost }) => {
 
     const onDestroy = () => {
         setState(state => {
-            destroySession(backendUrl, state.secret);
-            return { mode: 'idle' };
+            try {
+                destroySession(backendUrl, state.secret);
+            } finally {
+                return { mode: 'idle' };
+            }
         })
     };
 
