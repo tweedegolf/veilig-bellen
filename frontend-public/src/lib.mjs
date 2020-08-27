@@ -11,10 +11,11 @@ const veiligBellen = {
         }
 
         veiligBellen.activeElement = document.createElement('div');
-        veiligBellen.activeElement.setAttribute('class', 'irma-veilig-bellen-overlay');
+        veiligBellen.activeElement.setAttribute('class', 'irma-veilig-bellen-wrapper');
         document.body.appendChild(veiligBellen.activeElement);
         render(<App
             onClose={() => {
+                console.log('Closed');
                 document.body.removeChild(veiligBellen.activeElement);
                 veiligBellen.activeElement = null;
             }}

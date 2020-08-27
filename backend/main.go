@@ -21,29 +21,17 @@ import (
 // ExpireDelay
 const ExpireDelay = time.Hour
 
-type ConnectConfiguration struct {
-	// Amazon endpoint user identifier
-	Id string `json:"id,omitempty"`
-	// Amazon endpoint user secret
-	Secret string `json:"secret,omitempty"`
-	// Amazon Connect instance identifier
-	InstanceId string `json:"instance,omitempty"`
-	Queue      string `json:"queue,omitempty"`
-	Region     string `json:"region,omitempty"`
-}
-
 type BaseConfiguration struct {
-	Configuration   string               `json:"configuration,omitempty"`
-	Database        string               `json:"database,omitempty"`
-	ListenAddress   string               `json:"listen-address,omitempty"`
-	InternalAddress string               `json:"internal-address,omitempty"`
-	IrmaServer      string               `json:"irma-server,omitempty"`
-	IrmaHeaderKey   string               `json:"irma-header-key,omitempty"`
-	IrmaHeaderValue string               `json:"irma-header-value,omitempty"`
-	IrmaExternalURL string               `json:"irma-external-url,omitempty"`
-	PhoneNumber     string               `json:"phone-number,omitempty"`
-	PurposeMap      string               `json:"purpose-map,omitempty"`
-	Connect         ConnectConfiguration `json:"connect,omitempty"`
+	Configuration   string `json:"configuration,omitempty"`
+	Database        string `json:"database,omitempty"`
+	ListenAddress   string `json:"listen-address,omitempty"`
+	InternalAddress string `json:"internal-address,omitempty"`
+	IrmaServer      string `json:"irma-server,omitempty"`
+	IrmaHeaderKey   string `json:"irma-header-key,omitempty"`
+	IrmaHeaderValue string `json:"irma-header-value,omitempty"`
+	IrmaExternalURL string `json:"irma-external-url,omitempty"`
+	PhoneNumber     string `json:"phone-number,omitempty"`
+	PurposeMap      string `json:"purpose-map,omitempty"`
 }
 
 type Configuration struct {
@@ -56,7 +44,6 @@ type Configuration struct {
 	IrmaExternalURL string
 	PhoneNumber     string
 	PurposeMap      map[string]irma.AttributeConDisCon
-	Connect         ConnectConfiguration
 	db              Database
 	broadcaster     Broadcaster
 }
@@ -78,7 +65,6 @@ func resolveConfiguration(base BaseConfiguration) Configuration {
 			panic(fmt.Sprintf("could not parse purpose map: %v", err))
 		}
 	}
-	cfg.Connect = base.Connect
 
 	return cfg
 }
@@ -96,11 +82,6 @@ func main() {
 	irmaExternalURL := flag.String("irma-external-url", "", `The IRMA base url as shown to users in the app`)
 	phoneNumber := flag.String("phone-number", "", `The service number citizens will be directed to call.`)
 	purposeMap := flag.String("purpose-map", "", `The map from purposes to attribute condiscons.`)
-
-	// Note: we do not provide the option to set the ID & Secret using CLI.
-	connectInstanceId := flag.String("connect-instance-id", "", `Identifier of the Amazon Connect instance`)
-	connectQueue := flag.String("connect-queue", "", `Identifier of the Amazon Connect queue to show the metrics for`)
-	connectRegion := flag.String("connect-region", "", `The Amazon Connect region to use (i.e. eu-central-1)`)
 
 	flag.Parse()
 
@@ -150,15 +131,6 @@ func main() {
 	}
 	if *purposeMap != "" {
 		baseCfg.PurposeMap = *purposeMap
-	}
-	if *connectInstanceId != "" {
-		baseCfg.Connect.InstanceId = *connectInstanceId
-	}
-	if *connectQueue != "" {
-		baseCfg.Connect.Queue = *connectQueue
-	}
-	if *connectRegion != "" {
-		baseCfg.Connect.Region = *connectRegion
 	}
 
 	cfg := resolveConfiguration(baseCfg)
@@ -214,15 +186,6 @@ func main() {
 
 	cfg.broadcaster = makeBroadcaster()
 
-	if cfg.Connect.Id != "" && cfg.Connect.Secret != "" {
-		// This is expected to fail for every backend but the first to
-		// call it because the feed will already exist. We leave it to
-		// the adoptDaemon to start the connectPollDaemon.
-		cfg.db.NewFeed("kcc")
-	} else {
-		log.Printf("warning: Amazon Connect credentials not provided")
-	}
-
 	// TODO: Fail immediately if configured Irma server
 	// can't be reached before entering ListenAndServe.
 	go adoptDaemon(cfg)
@@ -235,10 +198,9 @@ func main() {
 	externalMux.HandleFunc("/", cfg.handleStatus)
 	externalMux.HandleFunc("/session", cfg.handleSession)
 	externalMux.HandleFunc("/session/status", cfg.handleSessionStatus)
-	externalMux.HandleFunc("/metrics", cfg.handleMetrics)
 	externalMux.HandleFunc("/session/update", cfg.handleSessionUpdate)
+	externalMux.HandleFunc("/session/destroy", cfg.handleSessionDestroy)
 	externalMux.HandleFunc("/disclose", cfg.handleDisclose)
-	externalMux.HandleFunc("/agent-feed", cfg.handleAgentFeed)
 
 	if cfg.InternalAddress != "" && cfg.InternalAddress != cfg.ListenAddress {
 		internalMux := http.NewServeMux()
@@ -271,17 +233,7 @@ func adoptDaemon(cfg Configuration) {
 		}
 
 		for _, feed := range feeds {
-			if feed == "kcc" {
-				if cfg.Connect.Id != "" && cfg.Connect.Secret != "" {
-					go connectPollDaemon(cfg)
-				} else {
-					// Secret not available, disabling feed.
-					log.Printf("no connect credentials available, disabling kcc feed")
-					cfg.db.DeleteFeed("kcc")
-				}
-			} else {
-				go cfg.pollIrmaSessionDaemon(feed)
-			}
+			go cfg.pollIrmaSessionDaemon(feed)
 		}
 	}
 }

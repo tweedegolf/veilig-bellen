@@ -1,82 +1,89 @@
 
-.irma-veilig-bellen-overlay {
-  display: flex;
+.irma-veilig-bellen-wrapper {
   position: fixed;
-  justify-content: center;
-  align-items: center;
+  top: 0;
+  left:0;
   z-index: 99;
-  background-color: rgba(#000, 0.6);
   height: 100%;
   width: 100%;
-
-  .dialog {
+  
+  .irma-veilig-bellen-overlay {
     display: flex;
-    flex-direction: column;
-    position: relative;
-    margin: 1rem;
-    padding: 4rem 2rem 2rem;
-    min-width: 45rem;
-    text-align: center;
-    background-color: #fff;
-    box-shadow: 0px 0px 8px -1px rgba(#000,0.75);
+    
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(#000, 0.6);
+    height: 100%;
+    width: 100%;
 
-    h2 {
-      font-size: 2.5rem !important;
-      margin: 0 !important;
-      color: #114f90;
-    }
-  
-    .underline {
-      padding: 1rem;
-      margin-bottom: 3rem;
-      border-bottom: 1px solid rgba(#000, 0.05);
-    }
-  
-    .button-icon {
-      align-self: flex-end;
-      position: absolute;
-      top: 2rem;
-      right: 1rem;
-    }
-  
-    button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem 1.5rem;
-      color: #fff;
-      background-color: #114f90;
-      border-radius: 0.2rem;
-      border: 0;
-      cursor: pointer;
-      transition: background-color .5s ease;
-      
-      .material-icons {
-        padding-right: 1rem;
-      }
-  
-      &:hover {
-        background-color: #27b2e1;
-        transition: background-color .5s ease;
-      }
-    }
-  
-    .button-icon {
-      color: #000;
-      border: none;
-      padding: 0;
-      background-color: transparent;
-  
-      &:hover {
-        background-color: transparent;
-      }
-    }
-  }
-
-  @media (max-width: 48rem) {
     .dialog {
-      min-width: calc(100% - 2rem);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      margin: 1rem;
+      padding: 4rem 2rem 2rem;
+      min-width: 45rem;
+      text-align: center;
+      background-color: #fff;
+      box-shadow: 0px 0px 8px -1px rgba(#000,0.75);
+
+      h2 {
+        font-size: 2.5rem !important;
+        margin: 0 !important;
+        color: #114f90;
+      }
+    
+      .underline {
+        padding: 1rem;
+        margin-bottom: 3rem;
+        border-bottom: 1px solid rgba(#000, 0.05);
+      }
+    
+      .button-icon {
+        align-self: flex-end;
+        position: absolute;
+        top: 2rem;
+        right: 1rem;
+      }
+    
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 1.5rem;
+        color: #fff;
+        background-color: #114f90;
+        border-radius: 0.2rem;
+        border: 0;
+        cursor: pointer;
+        transition: background-color .5s ease;
+        
+        .material-icons {
+          padding-right: 1rem;
+        }
+    
+        &:hover {
+          background-color: #27b2e1;
+          transition: background-color .5s ease;
+        }
+      }
+    
+      .button-icon {
+        color: #000;
+        border: none;
+        padding: 0;
+        background-color: transparent;
+    
+        &:hover {
+          background-color: transparent;
+        }
+      }
+    }
+
+    @media (max-width: 48rem) {
+      .dialog {
+        min-width: calc(100% - 2rem);
+      }
     }
   }
 }
-

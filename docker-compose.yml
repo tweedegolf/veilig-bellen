@@ -22,7 +22,6 @@ services:
       - irma
       - backend
       - frontend_agents
-      - frontend_panel
       - frontend_public
     volumes:
       - ".:/app:cached"
@@ -38,7 +37,6 @@ services:
               - backend.veiligbellen.test.tweede.golf
               - irma.veiligbellen.test.tweede.golf
               - agents.veiligbellen.test.tweede.golf
-              - panel.veiligbellen.test.tweede.golf
               - public.veiligbellen.test.tweede.golf
 
   backend:
@@ -67,11 +65,6 @@ services:
     - BACKEND_IRMAHEADERVALUE=12345
     - BACKEND_PHONENUMBER=+318000201001
     - BACKEND_PURPOSEMAP={"foo":[[["irma-demo.MijnOverheid.root.BSN"],["pbdf.gemeente.personalData.bsn"]]]}
-    - BACKEND_CONNECT_ID
-    - BACKEND_CONNECT_SECRET
-    - BACKEND_CONNECT_INSTANCEID=503d5d31-de38-4803-bb39-02e98ee8891c
-    - BACKEND_CONNECT_QUEUE=f3860ab3-8305-4862-940e-9f6b608f9530
-    - BACKEND_CONNECT_REGION=eu-central-1
     ports: ["127.0.0.1:8080:8080"]
     expose: [8080]
 
@@ -94,28 +87,8 @@ services:
     - HOME=/tmp/nodehome
     - BACKEND_URL=https://backend.veiligbellen.test.tweede.golf
     - CCP_HOST=sarif.awsapps.com
-    networks:
-    - default
-    expose: [1234]
-
-  frontend_panel:
-    build:
-      dockerfile: './node.Dockerfile'
-      context: './docker'
-    user: "$USER_ID:$GROUP_ID"
-    volumes:
-    - "./frontend-panel:/app:cached"
-    working_dir: "/app"
-    command:
-    - "/usr/local/bin/yarn"
-    - "parcel"
-    - "serve"
-    - "--no-hmr"
-    - "--no-autoinstall"
-    - "src/index.html"
-    environment:
-    - HOME=/tmp/nodehome
-    - BACKEND_HOSTNAME=backend.veiligbellen.test.tweede.golf
+    - URL_TEMPLATES={"irma-demo.MijnOverheid.root.BSN":"https://agents.veiligbellen.test.tweede.golf/#/bsn/{}"}
+    - METRICS_URL=https://agents.veiligbellen.test.tweede.golf/#/metrics
     networks:
     - default
     expose: [1234]
