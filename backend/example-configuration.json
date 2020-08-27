@@ -7,5 +7,5 @@
 		"foo": [[["irma-demo.MijnOverheid.root.BSN"]]]
 	},
 	"irma-external-url": "http://irma.veiligbellen.test.tweede.golf",
-	"allowed-origins": ["public.veiligbellen.test.tweede.golf"]
+	"allowed-origins": ["http://public.veiligbellen.test.tweede.golf", "https://agents.veiligbellen.test.tweede.golf"]
 }
