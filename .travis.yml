@@ -1,11 +1,13 @@
 services:
 - docker
 script:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- export DOCKER_TAG=$(git describe --abbrev=0)
 - docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh
   `id -u` `id -g`"
 - ls -aR build || true
 deploy:
-  provider: releases
+- provider: releases
   api_key:
     secure: JiUQ8qPFLmFJpBd4p3tmTCAGVtf7ILGNK/6wVXNg0JMjnj1NrhGivdGb8sNwN19gwGET0G9aCpiNF6AEeVF7VoHcMeF86kFZQ9fmlU12CeCl8420JOmr13+WzycTRWXqNNZ9sAu34D/Q//8Brartf/+tDdtaVr53WuAPttxsFx7/l0zgHNF2dBmRaLhdJBRWvnxkZTfPdVnEmK6i6ciw1oigJ9xGjrReUGJ1Jxny24gDNTdIXe4mVtgtrb6JaIAQFMgq237LtJ0HYaZMs4gXcoGjvV08HvJHQfdcnfuYK0CKJw97ZkeUC8F8kSVlhxVSVcFunltvVpaS2+y2GIpY03LK+FuaYWhqHkFelJ0gthJ4spgYZeUcDK4zKfwa7jO0zUFT2LD4NR4gtTxmRMJOQK8hKSsvZpn7QoN6yl+P3X/d3tCFjIGL8OPVh+iHYIiJulyAfekm5qNDJeonuTeg46mb2LFnipZW9TRHWcgJLKSaysx6amH45pgQXt5NtMQrfBaRugx03zfOAXazxv1NC0iymaZGpThkl2nduoObttfbGJ7Oie7So0M72aDnXl22S4Jlpym/NvMdqsW9UVS5ssopimMgybXOaynOKRr36kfta3zeps0mB6c0E+CX1GA7ZKdB4AYfJpOzJop4bp1QwOezEDogl3wqXtmCIb1HDhk=
   file:
@@ -16,3 +18,11 @@ deploy:
     repo: tweedegolf/veilig-bellen
     tags: true
   skip_cleanup: 'true'
+- provider: script
+  script: bash bin/docker_push.sh
+  on:
+    repo: tweedegolf/veilig-bellen
+env:
+  global:
+  - secure: niTmVx6e8f0naXOtDCgZ4i+LnuzvxNNdjXBjlsPMAi/ZdnSOXzOfHhIm9GokQE1+EVKjccDyXH1zcTRykx1BwTolP7D08ceRwVyRwvsZ/+9ufBtU5UfXAbjK5KxcxDbDKE9UfLtsXMJoS/M0QKD/2yS3UT4LycmWsVdzInozgEpeCsXkS443yWPPwb7sGjXatV+HLjduHjJ3oOinEpHD5TfxJJSumjZtNp7IQqfoBNi4C3s4XIaEGHkWq4k1Q5Fki76d+S+MsZzrisS2vIqEDcLJH9x8sBx32BffDEOunyRsEan+ZJa977vbViLQBV6pYuaJgOKhGplhJ/WPf7D8C53OcUmXOZGC9qeOR9n7tb3hSsiZCFtjxOPaRYVmDKY1zCikhjYnJtzhoTF1lBEdiKXuecTnPgAE500wVYpl4ALmsVGHDZfN36UtbtrQKXi+FZK6eFFACXbmBrkxUKWtJJqR95nfoYdeSQJzQn3JQxANXF1R/4Ov/suaa3zfi/iROp2aTHxi+Zv2WrDiaJRAfObp3dYks8cuynr2yawh2j7WUBMA70DlOa+ARQVk02rZ8GC7lY+AVohWdtCcpZTYpr+x4K0+ja0vpyho/kfwJ0geXEkYtcIdcna8Alckk2pc1wqN+epM1mdApnTmnmVekmPKLbgvke8vIeR4xs60aBM=
+  - secure: ecKl/C8PGMsOoOL9wpmx4RfjpgfglhZBNfS5fkCS2h4caRQp2FdU8SZP5qLdaKqTRNVd/ZzF5cw9NmtqzpfTpyFB6f5acNIbG8TYydPiHyeFIYaxOJpwdRsSn7IfVXX/z1BtNBn7WkZpvV4GglREy4iuPAiklDDlL0hNQtch8wyIlhxRod4aoniHo5omTuBIxwnhAfNHETywUbRoUKewMxMev1nv2WKF6BEGzKNuMgus+odprfq+IhXfqcJSXEKsZrFS5Ey/+n+78uQWDf0GVEjgbt7yg9nEPSdBZkxuM7aB+UbJzPHREcqdstY+OiuIiBmSJG8w4DDg+L7DTau/gSJVK+8WKbkPLsvySjybSWvplNZpMhMouZLKUTS6Nu4tT/GgC10AjXQ+HpcDEo0VvbHK/84ObrXLHTpf7nb2AhAA6U6WZjBPOsvtgVqHBFhV32Zy8cXMHk5ZKVL6le0R4D53rlMiyOHX86sxcfz7MlHg8as7fdoP/OFUEqP5X7GnAVNTCB+e5aGIhhhlFuGoqyJWUi3JshjA4ytLrR1kkKELRTPL/3ySZDpR1hqKmkGTt5e0/sENQjzkdYMSi+EBtSy3L3J10YJJmcRxQ41u09eVFsFNLgCj+p20PYEaqXMC6FPLFjxjKj/VIFt58UC9RMuHitR9HGOx1QhcZcCTg+k=
