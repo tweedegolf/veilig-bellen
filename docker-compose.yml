@@ -94,6 +94,7 @@ services:
     - HOME=/tmp/nodehome
     - BACKEND_URL=https://backend.veiligbellen.test.tweede.golf
     - CCP_HOST=sarif.awsapps.com
+    - URL_TEMPLATES={"irma-demo.MijnOverheid.root.BSN":"https://agents.veiligbellen.test.tweede.golf/#/bsn/{}"}
     networks:
     - default
     expose: [1234]
