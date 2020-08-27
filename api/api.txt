@@ -11,7 +11,7 @@ POST /call
 	returns it as the response body. The Amazon Connect Lambda will store
 	this secret as an attribute of the call.
 
-GET /disclose
+POST /disclose
 	Called by the agent frontend to request the disclosed attributes. The
 	request URL must contain a `secret` parameter with the session secret
 	corresponding to the session with the desired attributes. The agent

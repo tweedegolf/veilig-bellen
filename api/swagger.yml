@@ -63,7 +63,7 @@ paths:
             type: "string"
             description: "Call secret"
   /disclose:
-    get:
+    post:
       tags:
       - "privileged"
       summary: "Get IRMA attributes that were disclosed"

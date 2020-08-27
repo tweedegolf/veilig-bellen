@@ -17,12 +17,7 @@ const updateStatus = async (backendUrl, secret, status) => {
         return;
     }
 
-    const res = await axios.get(`${backendUrl}/session/update`, {
-        params: {
-            secret,
-            status,
-        },
-    });
+    const res = await axios.post(`${backendUrl}/session/update`, { secret, status });
 
     if (res.status !== 200) {
         throw new Error("Failed to update status");
@@ -34,11 +29,7 @@ const destroySession = async (backendUrl, secret) => {
         return;
     }
 
-    const res = await axios.get(`${backendUrl}/session/destroy`, {
-        params: {
-            secret,
-        },
-    });
+    const res = await axios.post(`${backendUrl}/session/destroy`, { secret });
 
     if (res.status !== 200) {
         throw new Error("Failed to destroy session");
@@ -46,7 +37,7 @@ const destroySession = async (backendUrl, secret) => {
 }
 
 const getDisclosure = async (backendUrl, secret) => {
-    const response = await axios.get(`${backendUrl}/disclose`, { params: { secret } });
+    const response = await axios.post(`${backendUrl}/disclose`, { secret });
     if (response.status === 200) {
         return response.data;
     } else {
