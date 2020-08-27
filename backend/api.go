@@ -68,14 +68,22 @@ func setDefaultHeaders(w http.ResponseWriter) {
 
 // Check if the service is still healthy and yield 200 OK if so.
 func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" && r.Method != "HEAD" {
+		http.Error(w, "must use GET", http.StatusMethodNotAllowed)
+		return
+	}
+
 	_, err := cfg.db.activeSessionCount()
 
 	if err != nil {
+		log.Printf("failed to access database: %v", err)
 		http.Error(w, "503 upstream down", http.StatusServiceUnavailable)
 		return
 	}
 
-	io.WriteString(w, "200 OK")
+	if r.Method == "GET" {
+		io.WriteString(w, "200 OK")
+	}
 }
 
 // A citizen pressed the call with Irma button on a page on the Gemeente
@@ -88,6 +96,10 @@ func (cfg Configuration) handleStatus(w http.ResponseWriter, r *http.Request) {
 // the DTMF code.
 func (cfg Configuration) handleSession(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
 
 	// This function is responsible for ensuring the irma session secret is
 	// stored in the database before it returns the QR code to the user.
@@ -193,6 +205,10 @@ func (cfg Configuration) cacheDisclosedAttributes(sessionToken string) {
 // Send IRMA session updates over websocket
 func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
+	if r.Method != "GET" {
+		http.Error(w, "must use GET", http.StatusMethodNotAllowed)
+		return
+	}
 
 	statusToken := r.FormValue("statusToken")
 	if statusToken == "" {
@@ -249,6 +265,11 @@ func (cfg Configuration) handleSessionStatus(w http.ResponseWriter, r *http.Requ
 // This handler should only be exposed on an internal port, reachable from the
 // related Amazon Lambda but not from the internet.
 func (cfg Configuration) handleCall(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
+
 	dtmf := r.FormValue("dtmf")
 	callState := r.FormValue("call_state")
 
@@ -279,12 +300,16 @@ type DiscloseResponse struct {
 	Disclosed json.RawMessage `json:"disclosed"`
 }
 
-// An agent frontend has accepted a call and sends us a GET request with the
+// An agent frontend has accepted a call and sends us a POST request with the
 // associated secret. We respond with the disclosed attributes. If the disclosed
 // attributes are not yet available, we synchronously poll the IRMA server to
 // get them.
 func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
 
 	secret := r.FormValue("secret")
 	if secret == "" {
@@ -326,6 +351,10 @@ func (cfg Configuration) handleDisclose(w http.ResponseWriter, r *http.Request) 
 
 func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
 
 	secret := r.FormValue("secret")
 	status := r.FormValue("status")
@@ -334,6 +363,10 @@ func (cfg Configuration) handleSessionUpdate(w http.ResponseWriter, r *http.Requ
 
 func (cfg Configuration) handleSessionDestroy(w http.ResponseWriter, r *http.Request) {
 	setDefaultHeaders(w)
+	if r.Method != "POST" {
+		http.Error(w, "must use POST", http.StatusMethodNotAllowed)
+		return
+	}
 
 	secret := r.FormValue("secret")
 	cfg.db.destroySession(secret)
