@@ -18,7 +18,7 @@ const Details = ({ data, urlTemplates }) => (
                         <TableCell component="th">{key}</TableCell>
                         <TableCell>{
                             urlTemplates && key in urlTemplates 
-                                ? <Link href={urlTemplates[key].replace('{}', encodeURIComponent(value))}>{value}</Link>
+                                ? <Link href={urlTemplates[key].replace('{}', encodeURIComponent(value))} target="_blank">{value}</Link>
                                 : value
                         }</TableCell>
                     </TableRow>
