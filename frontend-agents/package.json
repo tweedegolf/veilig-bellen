@@ -12,7 +12,7 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.46",
     "amazon-connect-streams": "^1.4.7",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "regenerator-runtime": "^0.13.5",
