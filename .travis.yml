@@ -2,7 +2,7 @@ services:
 - docker
 script:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- export DOCKER_TAG=$(git describe --abbrev=0)
+- export DOCKER_TAG=$(git describe --tags)
 - docker run -w /build -v `pwd`:/build:cached -it nixos/nix:2.3 /bin/sh -c "bin/build.sh
   `id -u` `id -g`"
 - ls -aR build || true
